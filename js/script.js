@@ -455,7 +455,7 @@ canvas.height = Math.max(
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     if (currentDepth === 0) {
-        statusText.innerHTML = "Status: <span class='badge mid'>Belum ada pipa</span>";
+        // statusText.innerHTML = "Status: <span class='badge mid'>Belum ada pipa</span>";
         detailInfo.innerHTML = `
             <strong>Instruksi Penggunaan:</strong>
             <div>1. Masukkan kedalaman pipa (misal: 45m)</div>
@@ -469,7 +469,7 @@ canvas.height = Math.max(
     }
     
     const info = getInfo(currentDepth);
-    statusText.innerHTML = `Status: <span class="badge ${info.class}">${info.level}</span>`;
+    // statusText.innerHTML = `Status: <span class="badge ${info.class}">${info.level}</span>`;
 
     // PERBAIKAN: Hitung tinggi yang bisa digunakan untuk pipa
     const usableHeight = canvas.height - TOP_MARGIN - BOTTOM_MARGIN;
@@ -577,12 +577,10 @@ for (let m = 0; m <= currentDepth; m += 1) {
     detailInfo.innerHTML = `
         <strong>Detail Pipa:</strong>
         <div>• Kedalaman pipa: ${currentDepth} meter</div>
-        <div>• Kategori risiko: ${info.level}</div>
         <div>• Jumlah saringan: ${saringanPosisi.length} unit</div>
         <div>• Posisi & ukuran saringan: ${saringanDetails}</div>
         <div>• Skala visualisasi: 1 meter = ${scale.toFixed(2)} pixel</div>
         <div>• Tinggi pipa (canvas): ${pipeHeight.toFixed(1)} pixel</div>
-        <div>• Keterangan: ${info.description}</div>
     `;
 }
 
@@ -694,6 +692,7 @@ function downloadPDF() {
         const y = 40;
         
         pdf.setFontSize(16);
+        pdf.text("LAPORAN VISUALISASI PIPA", pdfWidth/2, 20, { align: "center" });
         
         const info = getInfo(currentDepth);
         
