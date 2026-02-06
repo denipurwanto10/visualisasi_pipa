@@ -694,7 +694,6 @@ function downloadPDF() {
         const y = 40;
         
         pdf.setFontSize(16);
-        pdf.text("LAPORAN VISUALISASI PIPA", pdfWidth/2, 20, { align: "center" });
         
         const info = getInfo(currentDepth);
         
