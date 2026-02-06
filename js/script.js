@@ -679,42 +679,82 @@ function downloadPDF() {
     
     showNotification("Membuat PDF...", 'info', 2000);
     
-    // Simulasi proses pembuatan PDF
     setTimeout(() => {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF();
         
         const imgData = canvas.toDataURL("image/png");
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const imgWidth = 140;
-        const imgHeight = imgWidth * (canvas.height / canvas.width);
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        // **PERBAIKAN: Hitung ukuran gambar yang proporsional agar muat di halaman**
+        const maxImgWidth = pdfWidth - 40; // Margin kiri-kanan 20px
+        const maxImgHeight = pdfHeight - 120; // Beri ruang untuk judul dan detail
+        
+        // Hitung rasio aspek gambar
+        const canvasRatio = canvas.width / canvas.height;
+        const maxRatio = maxImgWidth / maxImgHeight;
+        
+        let imgWidth, imgHeight;
+        
+        if (canvasRatio > maxRatio) {
+            // Gambar lebih lebar daripada rasio maksimum
+            imgWidth = maxImgWidth;
+            imgHeight = imgWidth / canvasRatio;
+        } else {
+            // Gambar lebih tinggi daripada rasio maksimum
+            imgHeight = maxImgHeight;
+            imgWidth = imgHeight * canvasRatio;
+        }
+        
+        // Pastikan tidak melebihi batas maksimum
+        imgWidth = Math.min(imgWidth, maxImgWidth);
+        imgHeight = Math.min(imgHeight, maxImgHeight);
+        
         const x = (pdfWidth - imgWidth) / 2;
         const y = 40;
         
         pdf.setFontSize(16);
-        // pdf.text("LAPORAN VISUALISASI PIPA", pdfWidth/2, 20, { align: "center" });
+        pdf.text("LAPORAN VISUALISASI PIPA", pdfWidth/2, 20, { align: "center" });
         
         const info = getInfo(currentDepth);
         
+        // **PERBAIKAN: Tambahkan gambar dengan ukuran yang telah dihitung**
         pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
         
-        let detailY = y + imgHeight + 20;
-        pdf.setFontSize(12);
+        // **PERBAIKAN: Hitung posisi detail dengan memeriksa apakah masih muat di halaman**
+        let detailY = y + imgHeight + 15;
         
+        // Cek jika detail akan keluar dari halaman
+        const detailLines = 5 + (saringanPosisi.length * 1); // Perkiraan jumlah baris
+        const detailHeight = detailLines * 6;
+        
+        if (detailY + detailHeight > pdfHeight - 20) {
+            // Jika tidak muat, pindah ke halaman baru
+            pdf.addPage();
+            detailY = 20;
+        }
+        
+        pdf.setFontSize(12);
+        pdf.text("Detail Teknis:", 20, detailY);
         detailY += 8;
+        
         pdf.setFontSize(10);
         pdf.text(`• Kedalaman pipa: ${currentDepth} meter`, 20, detailY);
-        detailY += 6;
-        pdf.text(`• Kategori risiko: ${info.level}`, 20, detailY);
         detailY += 6;
         pdf.text(`• Jumlah saringan: ${saringanPosisi.length} unit`, 20, detailY);
         
         if (saringanPosisi.length > 0) {
-            detailY += 6;
+            detailY += 8;
             pdf.text(`• Posisi & ukuran saringan:`, 20, detailY);
             
             saringanPosisi.sort((a,b)=>a.depth - b.depth).forEach(saringan => {
                 detailY += 6;
+                // Cek apakah perlu halaman baru untuk setiap saringan
+                if (detailY > pdfHeight - 20) {
+                    pdf.addPage();
+                    detailY = 20;
+                }
                 pdf.text(`  - ${saringan.depth}m (ukuran: ${saringan.size}m)`, 25, detailY);
             });
         }
