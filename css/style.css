@@ -31,11 +31,6 @@ body {
     border-radius: 24px;
     padding: 32px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s ease;
-}
-
-.card:hover {
-    transform: translateY(-3px);
 }
 
 .header {
@@ -54,6 +49,11 @@ body {
     font-size: 14px;
     color: var(--muted);
     margin-top: 4px;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
 }
 
 .content {
@@ -101,39 +101,6 @@ input:focus {
     align-self: center;
     color: var(--muted);
 }
-
-.status {
-    margin-top: 16px;
-    font-weight: 600;
-}
-
-.badge {
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.low {
-    background: #dcfce7;   
-    color: #166534;        
-}
-
-.mid {
-    background: #fef3c7;   
-    color: #92400e;        
-}
-
-.high {
-    background: #fed7aa;   
-    color: #9a3412;        
-}
-
-.very-high {
-    background: #fee2e2;   
-    color: #7f1d1d;       
-}
-
 
 .detail-box {
     margin-top: 18px;
@@ -200,12 +167,14 @@ button {
 }
 
 canvas {
-    width: 100%;
-    max-width: 360px;
-    max-height: 560px;
-    height: auto;
+    width: 360px;
+    height: 600px;
     border-radius: 18px;
     background: #e5e7eb;
+}
+
+#threeContainer {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .tooltip {
@@ -229,14 +198,31 @@ canvas {
     border-radius: 16px;
     padding: 12px;
     font-size: 13px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
 }
 
 .hover-info strong {
     margin-bottom: 6px;
 }
+
+.saringan-input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.saringan-input-grid label {
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+
+.saringan-input-grid input {
+    width: 100%;
+}
+
+/* ====================== */
+/* LIST SARINGAN & PIPA */
+/* ====================== */
 
 .saringan-list {
     margin-top: 20px;
@@ -247,36 +233,320 @@ canvas {
     border-radius: 12px;
 }
 
+.pipe-list {
+    margin-top: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 10px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+/* Item saringan */
 .saringan-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 10px;
+    padding: 10px 12px;
     background: #fff;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    font-size: 12px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
     border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.saringan-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
 }
 
 .saringan-info {
     display: flex;
     flex-direction: column;
+    gap: 4px;
 }
 
 .saringan-depth {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--primary);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.saringan-depth::before {
+    content: "🎯";
+    font-size: 12px;
+}
+
+.saringan-details {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.saringan-details::before {
+    content: "📏";
+    font-size: 10px;
 }
 
 .saringan-delete {
     cursor: pointer;
     color: var(--danger);
-    font-weight: bold;
-    padding: 2px 8px;
-    border-radius: 4px;
-    background: #fee2e2;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border: 1px solid #fca5a5;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
+
+.saringan-delete:hover {
+    background: linear-gradient(135deg, #fecaca, #fca5a5);
+    transform: scale(1.05);
+}
+
+.saringan-delete::before {
+    content: "🗑️";
+    font-size: 11px;
+}
+
+/* Item pipa */
+.pipe-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #fff;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.pipe-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.pipe-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pipe-segment {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pipe-segment::before {
+    content: "📊";
+    font-size: 12px;
+}
+
+.pipe-range {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pipe-range::before {
+    content: "⏬";
+    font-size: 10px;
+}
+
+.pipe-diameter {
+    font-size: 11px;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-top: 2px;
+}
+
+.pipe-delete {
+    cursor: pointer;
+    color: var(--danger);
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border: 1px solid #fca5a5;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pipe-delete:hover {
+    background: linear-gradient(135deg, #fecaca, #fca5a5);
+    transform: scale(1.05);
+}
+
+.pipe-delete::before {
+    content: "🗑️";
+    font-size: 11px;
+}
+
+/* ====================== */
+/* OPEN HOLE STYLES */
+/* ====================== */
+
+.openhole-info {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    font-size: 13px;
+}
+
+.openhole-info.active {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    border-left: 4px solid var(--success);
+}
+
+.openhole-status {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.openhole-status.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.openhole-status.inactive {
+    background: #e2e8f0;
+    color: var(--muted);
+}
+
+.openhole-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f0fdf4;
+    border-radius: 10px;
+    margin-top: 10px;
+    font-size: 13px;
+    border: 1px solid #bbf7d0;
+    transition: all 0.2s ease;
+}
+
+.openhole-item:hover {
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+    transform: translateY(-1px);
+}
+
+.openhole-info-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.openhole-depth {
+    font-weight: 700;
+    color: #065f46;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.openhole-depth::before {
+    content: "🕳️";
+    background: var(--success);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.openhole-description {
+    font-size: 12px;
+    color: #047857;
+    font-weight: 500;
+}
+
+.openhole-delete {
+    cursor: pointer;
+    color: #b91c1c;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border: 1px solid #fca5a5;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.openhole-delete:hover {
+    background: linear-gradient(135deg, #fecaca, #fca5a5);
+    transform: scale(1.05);
+}
+
+.openhole-delete::before {
+    content: "🗑️";
+    font-size: 11px;
+}
+
+/* Pesan kosong */
+.empty-message {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.empty-message::before {
+    content: "📋";
+    font-size: 24px;
+    opacity: 0.5;
+}
+
+/* ====================== */
+/* RESPONSIVE */
+/* ====================== */
 
 @media (max-width: 900px) {
     .content {
@@ -292,28 +562,32 @@ canvas {
         font-size: 24px;
     }
 
-    .visual-card {
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .hover-info {
-        width: 100%;
-    }
-
     .header {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
     }
 
+    .header-buttons {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
     .controls-grid {
         grid-template-columns: 1fr;
     }
-    /* Tambahkan di akhir file CSS */
+    
+    .visual-card {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .hover-info {
+        width: 100%;
+    }
+}
 
-/* Media Queries untuk Responsif */
 @media (max-width: 768px) {
     .container {
         padding: 12px 8px;
@@ -386,13 +660,15 @@ canvas {
         font-size: 12px;
     }
     
+    .pipe-list,
     .saringan-list {
         max-height: 120px;
     }
     
+    .pipe-item,
     .saringan-item {
-        font-size: 11px;
-        padding: 6px 8px;
+        font-size: 12px;
+        padding: 8px 10px;
     }
     
     .detail-box {
@@ -412,10 +688,6 @@ canvas {
     
     label {
         font-size: 12px;
-    }
-    
-    .status {
-        font-size: 14px;
     }
 }
 
@@ -442,12 +714,30 @@ canvas {
         padding: 8px 12px;
     }
     
-    /* Grid untuk input saringan lebih kompak */
-    .panel .input-section > div[style*="grid-template-columns"] {
+    .saringan-input-grid {
         grid-template-columns: 1fr;
         gap: 8px;
     }
+    
+    .pipe-list,
+    .saringan-list {
+        max-height: 100px;
+    }
+    
+    .pipe-item,
+    .saringan-item {
+        padding: 6px 8px;
+    }
+    
+    .pipe-info,
+    .saringan-info {
+        gap: 2px;
+    }
 }
+
+/* ====================== */
+/* MOBILE & TOUCH ENHANCEMENT */
+/* ====================== */
 
 /* Tambahan untuk orientasi landscape di mobile */
 @media (max-height: 600px) and (orientation: landscape) {
@@ -479,20 +769,42 @@ canvas {
 /* Touch-friendly improvements */
 @media (pointer: coarse) {
     button {
-        min-height: 44px; /* Minimum touch target size */
+        min-height: 44px;
     }
     
     input {
         min-height: 44px;
     }
     
-    .saringan-delete {
+    .pipe-delete,
+    .saringan-delete,
+    .openhole-delete {
         min-width: 60px;
-        min-height: 32px;
+        min-height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 8px 16px;
+    }
+    
+    .pipe-item,
+    .saringan-item,
+    .openhole-item {
+        min-height: 60px;
     }
 }
 
+/* Efek hover hanya untuk desktop */
+@media (hover: hover) {
+    .pipe-item:hover,
+    .saringan-item:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+    
+    .pipe-delete:hover,
+    .saringan-delete:hover,
+    .openhole-delete:hover {
+        background: linear-gradient(135deg, #fecaca, #fca5a5);
+    }
 }
