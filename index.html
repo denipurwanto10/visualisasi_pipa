@@ -14,7 +14,7 @@
             <div class="header">
                 <div>
                     <h1>Visualisasi Pipa</h1>
-                    <p>Visualisasi sederhana pipa dengan saringan yang bisa ditambahkan manual</p>
+                    <p>Visualisasi sederhana pipa dengan saringan dan open hole</p>
                 </div>
                 <button onclick="downloadPDF()" class="btn-primary">Download PDF</button>
             </div>
@@ -27,8 +27,14 @@
                             <input type="number" id="depthInput" placeholder="Contoh: 45" min="5" max="500">
                             <span class="unit">m</span>
                         </div>
-                        
-                        <label style="margin-top: 20px;">2. Tambah Saringan</label>
+
+                        <label style="margin-top: 20px;">2. Diameter Pipa</label>
+                        <div class="input-group">
+                            <input type="number" id="pipeDiameter" placeholder="Contoh: 6" min="1" max="24" step="0.5">
+                            <span class="unit">inch</span>
+                        </div>
+
+                        <label style="margin-top: 20px;">3. Tambah Saringan</label>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
                             <div>
@@ -42,26 +48,54 @@
                         </div>
                         
                         <div class="controls-grid">
-                            <button onclick="updateVisualization()" class="btn-primary">Buat Pipa</button>
+                            <button onclick="updateVisualization()" class="btn-primary">+ Tambah Pipa</button>
                             <button onclick="addSaringan()" class="btn-secondary">+ Tambah Saringan</button>
                         </div>
+
+                        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                            <label>4. Open Hole (opsional)</label>
+                            <div class="input-group" style="margin-top: 8px;">
+                                <input type="number" id="openHoleDepth" placeholder="Kedalaman open hole" min="1" max="500">
+                                <span class="unit">m</span>
+                            </div>
+                            <button onclick="setOpenHole()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
+                                + Set Open Hole
+                            </button>
+                        </div>
                         
-                        <button onclick="resetAll()" class="btn-danger" style="margin-top: 16px; width: 100%;">Reset Semua</button>
+                        <button onclick="resetAll()" class="btn-danger" style="margin-top: 24px; width: 100%;">Reset Semua</button>
+                    </div>
+
+                    <div class="pipe-list" id="pipeList">
+                        <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">
+                            Belum ada pipa dibuat
+                        </div>
                     </div>
                     
-                    <!-- <div id="status" class="status">Status:</div> -->
-                    
                     <div class="saringan-list" id="saringanList">
-                        <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">Belum ada saringan ditambahkan</div>
+                        <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">
+                            Belum ada saringan ditambahkan
+                        </div>
+                    </div>
+
+                    <div class="openhole-info" id="openHoleInfo">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong>Open Hole</strong>
+                            <span id="openHoleStatus" class="openhole-status inactive">Belum diatur</span>
+                        </div>
+                        <div id="openHoleDetails" style="font-size: 12px; color: #64748b;">
+                            Open hole akan ditampilkan di bagian bawah pipa terakhir
+                        </div>
                     </div>
 
                     <div id="detailInfo" class="detail-box">
                         <strong>Instruksi Penggunaan:</strong>
                         <div>1. Masukkan kedalaman pipa (misal: 45m)</div>
-                        <div>2. Klik "Buat Pipa" untuk membuat pipa</div>
+                        <div>2. Klik "Tambah Pipa" untuk membuat pipa</div>
                         <div>3. Masukkan kedalaman dan ukuran saringan</div>
                         <div>4. Klik "Tambah Saringan" untuk menambah</div>
-                        <div>5. Klik "Reset Semua" untuk mulai ulang</div>
+                        <div>5. Atur open hole (opsional) di bagian bawah</div>
+                        <div>6. Klik "Reset Semua" untuk mulai ulang</div>
                     </div>
                 </div>
 
@@ -76,7 +110,6 @@
             </div>
         </div>
     </div>
-    
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
