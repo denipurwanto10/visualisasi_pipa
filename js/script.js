@@ -4,6 +4,7 @@ const depthInput = document.getElementById("depthInput");
 const saringanDepth = document.getElementById("saringanDepth");
 const saringanSize = document.getElementById("saringanSize");
 const openHoleDepth = document.getElementById("openHoleDepth");
+const groundLevelInput = document.getElementById("groundLevelInput");
 const saringanList = document.getElementById("saringanList");
 const openHoleInfo = document.getElementById("openHoleInfo");
 const openHoleStatus = document.getElementById("openHoleStatus");
@@ -22,8 +23,8 @@ let pipeSegments = [];
 let saringanPosisi = [];
 let openHole = null;
 let components = [];
-let pipeWidth = 40;
 let groundLevel = 0;
+let groundLevelSet = false;
 const inchToPixel = 6;
 
 let notificationTimeout = null;
@@ -160,7 +161,7 @@ function darkenColor(color, percent) {
 }
 
 // Drawing functions
-function drawSaringan(x, y, width, height, depth, size, isOutOfBounds = false) {
+function drawSaringan(x, y, width, height, depth, size) {
     const saringanColor = "#8B5A2B";
     
     const gradient = ctx.createLinearGradient(x, y, x, y + height);
@@ -172,25 +173,9 @@ function drawSaringan(x, y, width, height, depth, size, isOutOfBounds = false) {
     ctx.rect(x, y, width, height);
     ctx.fill();
 
-    // Jika saringan keluar batas, tambah border merah
-    if (isOutOfBounds) {
-        ctx.strokeStyle = "#ef4444";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        
-        // Tambah warning pattern
-        ctx.strokeStyle = "rgba(239, 68, 68, 0.3)";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath();
-        ctx.rect(x + 2, y + 2, width - 4, height - 4);
-        ctx.stroke();
-        ctx.setLineDash([]);
-    } else {
-        ctx.strokeStyle = darkenColor(saringanColor, 40);
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-    }
+    ctx.strokeStyle = darkenColor(saringanColor, 40);
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
     ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
     ctx.lineWidth = 0.8;
@@ -203,22 +188,22 @@ function drawSaringan(x, y, width, height, depth, size, isOutOfBounds = false) {
         ctx.stroke();
     }
 
-    // *** TEKS DI PINGGIR DENGAN UKURAN ***
+    // Teks di pinggir dengan ukuran
     const saringanRightX = x + width;
     const lineStartX = saringanRightX + 2;
     const lineEndX = lineStartX + 20;
     const centerY = y + height / 2;
 
     // Garis penghubung
-    ctx.strokeStyle = isOutOfBounds ? "#ef4444" : "#000000";
+    ctx.strokeStyle = "#000000";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(lineStartX, centerY);
     ctx.lineTo(lineEndX, centerY);
     ctx.stroke();
 
-    // Teks dengan ukuran di pinggir
-    ctx.fillStyle = isOutOfBounds ? "#ef4444" : "#000000";
+    // Teks dengan range kedalaman
+    ctx.fillStyle = "#000000";
     ctx.font = "bold 12px Inter";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
@@ -226,30 +211,47 @@ function drawSaringan(x, y, width, height, depth, size, isOutOfBounds = false) {
     const labelText = `Saringan (${size.toFixed(1)}m)`;
     ctx.fillText(labelText, lineEndX + 4, centerY);
 
-    // Optional: Tambah icon kecil di ujung garis
-    ctx.fillStyle = isOutOfBounds ? "#ef4444" : "#8B5A2B";
+    // Teks detail kecil
+    ctx.fillStyle = "#64748b";
+    ctx.font = "10px Inter";
+    const detailText = `${depth.toFixed(1)} - ${(depth + size).toFixed(1)}m`;
+    ctx.fillText(detailText, lineEndX + 4, centerY + 15);
+
+    // Icon kecil di ujung garis
+    ctx.fillStyle = "#8B5A2B";
     ctx.beginPath();
     ctx.arc(lineEndX, centerY, 3, 0, Math.PI * 2);
     ctx.fill();
 
+    // Update info untuk tooltip
+    const saringanEnd = depth + size;
+    let info = `Saringan: ${depth.toFixed(1)}m - ${saringanEnd.toFixed(1)}m (${size.toFixed(1)}m)`;
+    if (groundLevelSet) {
+        const relativeStart = depth - groundLevel;
+        const relativeEnd = saringanEnd - groundLevel;
+        info += `\nRelatif ke tanah: ${relativeStart.toFixed(1)}m - ${relativeEnd.toFixed(1)}m`;
+    }
+    
     components.push({
         type: "saringan",
-        x, y, width, height, depth, size, isOutOfBounds,
-        info: isOutOfBounds 
-            ? `Saringan - PERINGATAN: Keluar dari pipa! - Kedalaman: ${depth}m - Ukuran: ${size}m`
-            : `Saringan - Kedalaman: ${depth}m - Ukuran: ${size}m - Fungsi: Menyaring Air`
+        x, y, width, height, 
+        depth, size,
+        start: depth,  // Atas saringan
+        end: depth + size,  // Bawah saringan
+        info: info
     });
 }
 
 function drawOpenHole(x, y, width, height) {
     const openHoleColor = "#10b981";
     
+    // Draw main open hole area
     ctx.fillStyle = openHoleColor;
     ctx.beginPath();
     ctx.rect(x, y, width, height);
     ctx.fill();
 
-    // Pattern subtle
+    // Dot pattern
     ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
     const patternSize = 4;
     
@@ -263,7 +265,7 @@ function drawOpenHole(x, y, width, height) {
         }
     }
 
-    // Border
+    // Border dengan warna lebih gelap
     ctx.strokeStyle = "#047857";
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -273,12 +275,12 @@ function drawOpenHole(x, y, width, height) {
     ctx.lineWidth = 1;
     ctx.strokeRect(x + 2, y + 2, width - 4, height - 4);
 
-    // *** TEKS DI PINGGIR DENGAN UKURAN OPEN HOLE ***
+    // Teks di pinggir
     const lineStartX = x + width;
     const lineEndX = lineStartX + 20;
     const centerY = y + height / 2;
     
-    // Garis
+    // Garis horizontal
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -286,26 +288,31 @@ function drawOpenHole(x, y, width, height) {
     ctx.lineTo(lineEndX, centerY);
     ctx.stroke();
 
-    // Teks dengan ukuran open hole
-    const ohSize = openHole?.size || 0;
+    // Teks "Open Hole"
     ctx.fillStyle = "#000000";
     ctx.font = "bold 12px Inter";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    
-    const labelText = `Open Hole (${ohSize.toFixed(1)}m)`;
-    ctx.fillText(labelText, lineEndX + 4, centerY);
+    ctx.fillText("Open Hole", lineEndX + 4, centerY);
 
-    // Optional: Tambah icon kecil
+    // Icon kecil di ujung garis
     ctx.fillStyle = "#10b981";
     ctx.beginPath();
     ctx.arc(lineEndX, centerY, 3, 0, Math.PI * 2);
     ctx.fill();
 
+    // Add to components for mouse interaction
+    let info = `Open Hole: ${openHole.startDepth.toFixed(1)}m - ${openHole.endDepth.toFixed(1)}m (${openHole.size.toFixed(1)}m)`;
+    if (groundLevelSet) {
+        const relativeStart = openHole.startDepth - groundLevel;
+        const relativeEnd = openHole.endDepth - groundLevel;
+        info += `\nRelatif ke tanah: ${relativeStart.toFixed(1)}m - ${relativeEnd.toFixed(1)}m`;
+    }
+    
     components.push({
         type: "openhole",
         x, y, width, height,
-        info: `Open Hole: ${openHole?.startDepth || 0}m - ${openHole?.endDepth || 0}m (${ohSize.toFixed(1)}m) - Posisi: Bawah pipa`
+        info: info
     });
 }
 
@@ -349,86 +356,45 @@ function drawPipaUtama(x, y, width, totalHeight, depth, options = {}) {
         ctx.beginPath();
         ctx.arc(x + width/2, y + totalHeight, 4, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillText(`${depth}m`, x + width/2, y + totalHeight + 15);
+        // Tampilkan hanya kedalaman meter saja
+        ctx.fillText(`${depth.toFixed(1)}m`, x + width/2, y + totalHeight + 15);
     }
 
     ctx.textAlign = "left";
 }
 
-// Validasi saringan
-function validateSaringan(depth, size) {
-    // Cari pipa yang sesuai
-    const pipe = pipeSegments.find(p => depth >= p.start && depth <= p.end);
+function drawGroundLevelLine(groundY) {
+    if (!groundLevelSet) return;
     
-    if (!pipe) {
-        return { valid: false, message: `Kedalaman ${depth}m tidak ada dalam pipa manapun` };
-    }
+    // Gambar garis putus-putus
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = "#d97706";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(20, groundY);
+    ctx.lineTo(canvas.width - 20, groundY);
+    ctx.stroke();
     
-    // Hitung batas atas dan bawah saringan
-    const saringanAtas = depth - (size / 2);
-    const saringanBawah = depth + (size / 2);
+    // Reset line dash
+    ctx.setLineDash([]);
     
-    // Validasi: Saringan tidak boleh keluar dari pipa
-    if (saringanAtas < pipe.start) {
-        return { 
-            valid: false, 
-            message: `Saringan terlalu tinggi! Bagian atas (${saringanAtas.toFixed(1)}m) keluar dari pipa (pipa mulai dari ${pipe.start}m)`,
-            details: `Ukuran maksimal untuk kedalaman ${depth}m adalah ${((depth - pipe.start) * 2).toFixed(1)}m`
-        };
-    }
+    // Tambah label "Permukaan Tanah"
+    ctx.fillStyle = "#d97706";
+    ctx.font = "bold 12px Inter";
+    ctx.textAlign = "left";
+    ctx.fillText("Permukaan Tanah", 25, groundY - 8);
     
-    if (saringanBawah > pipe.end) {
-        return { 
-            valid: false, 
-            message: `Saringan terlalu rendah! Bagian bawah (${saringanBawah.toFixed(1)}m) keluar dari pipa (pipa berakhir di ${pipe.end}m)`,
-            details: `Ukuran maksimal untuk kedalaman ${depth}m adalah ${((pipe.end - depth) * 2).toFixed(1)}m`
-        };
-    }
+    // Tambah keterangan kedalaman
+    ctx.fillStyle = "#92400e";
+    ctx.font = "10px Inter";
+    const positionText = groundLevel >= 0 ? 
+        `${groundLevel.toFixed(1)}m dari dasar sistem` : 
+        `${Math.abs(groundLevel).toFixed(1)}m di atas dasar sistem`;
+    ctx.fillText(positionText, 25, groundY + 15);
     
-    // Hitung ukuran maksimal yang diperbolehkan
-    const maxSizeUp = (depth - pipe.start) * 2;
-    const maxSizeDown = (pipe.end - depth) * 2;
-    const maxSizeInPipe = Math.min(maxSizeUp, maxSizeDown);
-    
-    if (size > maxSizeInPipe) {
-        return { 
-            valid: false, 
-            message: `Ukuran saringan terlalu besar!`,
-            details: `Maksimal ${maxSizeInPipe.toFixed(1)}m untuk posisi ${depth}m dalam pipa ${pipe.start}m-${pipe.end}m`
-        };
-    }
-    
-    // Cek tabrakan dengan saringan lain
-    for (const existingSaringan of saringanPosisi) {
-        const existingStart = existingSaringan.depth - existingSaringan.size / 2;
-        const existingEnd = existingSaringan.depth + existingSaringan.size / 2;
-
-        if ((saringanAtas >= existingStart && saringanAtas <= existingEnd) ||
-            (saringanBawah >= existingStart && saringanBawah <= existingEnd) ||
-            (saringanAtas <= existingStart && saringanBawah >= existingEnd)) {
-            return { 
-                valid: false, 
-                message: `Saringan tumpang tindih dengan saringan di kedalaman ${existingSaringan.depth}m`,
-                details: `Saringan lain: ${existingStart.toFixed(1)}m - ${existingEnd.toFixed(1)}m`
-            };
-        }
-    }
-    
-    // Cek tabrakan dengan open hole
-    if (openHole) {
-        const openHolePipe = pipeSegments[openHole.pipeIndex];
-        if (openHolePipe && pipe.start === openHolePipe.start) {
-            if (saringanBawah > openHole.startDepth) {
-                return { 
-                    valid: false, 
-                    message: `Saringan terlalu dekat dengan open hole`,
-                    details: `Open hole mulai dari ${openHole.startDepth}m`
-                };
-            }
-        }
-    }
-    
-    return { valid: true, pipe: pipe };
+    // Tambah icon
+    ctx.font = "14px Inter";
+    ctx.fillText("📍", 5, groundY + 5);
 }
 
 // List management functions
@@ -443,35 +409,30 @@ function updateSaringanList() {
     saringanPosisi.sort((a, b) => a.depth - b.depth);
     
     saringanPosisi.forEach((saringan, index) => {
-        const item = document.createElement('div');
-        item.className = 'saringan-item';
+        const saringanEnd = saringan.depth + saringan.size;
         
-        // Validasi apakah saringan masih dalam pipa
-        const pipe = pipeSegments.find(p => saringan.depth >= p.start && saringan.depth <= p.end);
-        const saringanAtas = saringan.depth - (saringan.size / 2);
-        const saringanBawah = saringan.depth + (saringan.size / 2);
-        const isOutOfBounds = !pipe || saringanAtas < pipe.start || saringanBawah > pipe.end;
-        
-        if (isOutOfBounds) {
-            item.classList.add('saringan-out-of-bounds');
-            item.innerHTML = `
-                <div class="saringan-info">
-                    <span class="saringan-depth" style="color: #ef4444;">⚠️ Kedalaman: ${saringan.depth.toFixed(1)} m</span>
-                    <span class="saringan-details" style="color: #ef4444;">Ukuran: ${saringan.size.toFixed(1)} m (KELUAR BATAS)</span>
-                </div>
-                <div class="saringan-delete" onclick="hapusSaringan(${index})">Hapus</div>
-                <div class="saringan-warning"></div>
-            `;
-        } else {
-            item.innerHTML = `
-                <div class="saringan-info">
-                    <span class="saringan-depth">Kedalaman: ${saringan.depth.toFixed(1)} m</span>
-                    <span class="saringan-details">Ukuran: ${saringan.size.toFixed(1)} m (${saringan.size * 100} cm)</span>
-                </div>
-                <div class="saringan-delete" onclick="hapusSaringan(${index})">Hapus</div>
-            `;
+        // Hitung posisi relatif jika ada ground level
+        let relativeInfo = '';
+        if (groundLevelSet) {
+            const relativeStart = saringan.depth - groundLevel;
+            const relativeEnd = saringanEnd - groundLevel;
+            const startDesc = relativeStart >= 0 ? 'di bawah' : 'di atas';
+            const endDesc = relativeEnd >= 0 ? 'di bawah' : 'di atas';
+            relativeInfo = `<div style="font-size: 11px; margin-top: 2px; color: #64748b;">
+                Relatif: ${Math.abs(relativeStart).toFixed(1)}m ${startDesc} s/d ${Math.abs(relativeEnd).toFixed(1)}m ${endDesc} tanah
+            </div>`;
         }
         
+        const item = document.createElement('div');
+        item.className = 'saringan-item';
+        item.innerHTML = `
+            <div class="saringan-info">
+                <span class="saringan-depth">Posisi: ${saringan.depth.toFixed(1)}m - ${saringanEnd.toFixed(1)} m</span>
+                <span class="saringan-details">Ukuran: ${saringan.size.toFixed(1)} m</span>
+                ${relativeInfo}
+            </div>
+            <div class="saringan-delete" onclick="hapusSaringan(${index})">Hapus</div>
+        `;
         saringanList.appendChild(item);
     });
 }
@@ -491,20 +452,96 @@ function updatePipeList() {
     pipeSegments.sort((a, b) => a.start - b.start);
 
     pipeSegments.forEach((pipe, index) => {
+        // Hitung posisi relatif jika ada ground level
+        let relativeInfo = '';
+        if (groundLevelSet) {
+            const relativeStart = pipe.start - groundLevel;
+            const relativeEnd = pipe.end - groundLevel;
+            const startDesc = relativeStart >= 0 ? 'di bawah' : 'di atas';
+            const endDesc = relativeEnd >= 0 ? 'di bawah' : 'di atas';
+            relativeInfo = `<div style="font-size: 11px; margin-top: 2px; color: #64748b;">
+                Relatif: ${Math.abs(relativeStart).toFixed(1)}m ${startDesc} s/d ${Math.abs(relativeEnd).toFixed(1)}m ${endDesc} tanah
+            </div>`;
+        }
+        
         const item = document.createElement('div');
         item.className = 'pipe-item';
 
         item.innerHTML = `
             <div class="pipe-info">
-                <span class="pipe-segment"><strong>Pipa ${index + 1}</strong></span>
-                <span class="pipe-range">Kedalaman: ${pipe.start}m – ${pipe.end}m</span>
-                <span class="pipe-diameter">Diameter: ${pipe.diameter}"</span>
+                <span class="pipe-segment"><strong>Pipa ${index + 1}</strong> (${pipe.diameter}")</span>
+                <span class="pipe-range">Kedalaman: ${pipe.start.toFixed(1)}m – ${pipe.end.toFixed(1)}m</span>
+                ${relativeInfo}
             </div>
             <div class="pipe-delete" onclick="hapusPipa(${index})">Hapus</div>
         `;
 
         pipeList.appendChild(item);
     });
+}
+
+function updateGroundLevelInfo() {
+    const groundLevelInfo = document.getElementById("groundLevelInfo");
+    const groundLevelStatus = document.getElementById("groundLevelStatus");
+    const groundLevelDetails = document.getElementById("groundLevelDetails");
+    
+    if (!groundLevelSet) {
+        groundLevelInfo.classList.remove('active');
+        groundLevelStatus.textContent = "Belum diatur";
+        groundLevelStatus.className = "groundlevel-status inactive";
+        groundLevelDetails.innerHTML = `
+            <div style="margin-top: 8px;">
+                <div style="margin-bottom: 4px;">• Titik acuan relatif terhadap sistem koordinat pipa</div>
+                <div>• Bisa negatif (di atas pipa) atau positif (di bawah pipa)</div>
+                <div>• Contoh: -2.5 = tanah 2.5m di atas ujung atas pipa</div>
+            </div>
+        `;
+        return;
+    }
+    
+    groundLevelInfo.classList.add('active');
+    groundLevelStatus.textContent = "Aktif";
+    groundLevelStatus.className = "groundlevel-status active";
+    
+    let positionDesc = "";
+    
+    if (groundLevel < 0) {
+        positionDesc = `<span style="color: #dc2626;">${Math.abs(groundLevel).toFixed(1)}m di atas dasar sistem</span>`;
+    } else if (groundLevel > 0) {
+        positionDesc = `<span style="color: #059669;">${groundLevel.toFixed(1)}m di bawah dasar sistem</span>`;
+    } else {
+        positionDesc = "sama dengan dasar sistem";
+    }
+    
+    // Hitung posisi pipa relatif terhadap tanah
+    let pipePositionInfo = "";
+    if (pipeSegments.length > 0) {
+        const firstPipe = pipeSegments[0];
+        const lastPipe = pipeSegments[pipeSegments.length - 1];
+        const pipeTopRel = firstPipe.start - groundLevel;
+        const pipeBottomRel = lastPipe.end - groundLevel;
+        
+        pipePositionInfo = `
+            <div style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #3b82f6;">
+                <div style="font-size: 11px; font-weight: 600; margin-bottom: 4px;">Posisi Pipa:</div>
+                <div style="font-size: 10px; line-height: 1.4;">
+                    <div>• Ujung atas: ${pipeTopRel.toFixed(1)}m dari tanah ${pipeTopRel >= 0 ? '(di bawah)' : '(di atas)'}</div>
+                    <div>• Ujung bawah: ${pipeBottomRel.toFixed(1)}m dari tanah ${pipeBottomRel >= 0 ? '(di bawah)' : '(di atas)'}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    groundLevelDetails.innerHTML = `
+        <div style="margin-top: 8px;">
+            <div style="margin-bottom: 4px; font-weight: 600;">Titik Acuan: ${groundLevel.toFixed(1)} m</div>
+            <div style="font-size: 12px; margin-bottom: 8px;">${positionDesc}</div>
+            ${pipePositionInfo}
+            <button onclick="hapusGroundLevel()" class="btn-secondary" style="margin-top: 10px; padding: 6px 12px; font-size: 12px; width: 100%;">
+                Hapus Titik Acuan
+            </button>
+        </div>
+    `;
 }
 
 function updateOpenHoleInfo() {
@@ -514,11 +551,8 @@ function updateOpenHoleInfo() {
         openHoleStatus.className = "openhole-status inactive";
         openHoleDetails.innerHTML = `
             <div style="margin-top: 8px;">
-                <div style="margin-bottom: 4px;">• Open hole akan ditampilkan di bagian bawah pipa terakhir</div>
+                <div style="margin-bottom: 4px;">• Open hole akan ditampilkan di bagian bawah pipa</div>
                 <div>• Pastikan tidak ada saringan di area open hole</div>
-                <div style="margin-top: 6px; font-size: 11px; color: #64748b;">
-                    <strong>Note:</strong> Open hole otomatis mengambil dari kedalaman input hingga ujung pipa
-                </div>
             </div>
         `;
         return;
@@ -528,42 +562,163 @@ function updateOpenHoleInfo() {
     openHoleStatus.textContent = "Aktif";
     openHoleStatus.className = "openhole-status active";
     
+    // Hitung posisi relatif jika ada ground level
+    let relativeInfo = '';
+    if (groundLevelSet) {
+        const relativeStart = openHole.startDepth - groundLevel;
+        const relativeEnd = openHole.endDepth - groundLevel;
+        relativeInfo = `
+            <div style="font-size: 11px; margin-top: 4px; color: #64748b;">
+                Relatif ke tanah: ${relativeStart.toFixed(1)}m - ${relativeEnd.toFixed(1)}m
+            </div>
+        `;
+    }
+    
     openHoleDetails.innerHTML = `
         <div class="openhole-item">
             <div class="openhole-info-details">
-                <span class="openhole-depth">Mulai: ${openHole.depth} m</span>
-                <span class="openhole-description">Ukuran: ${openHole.size.toFixed(1)} m (hingga ${openHole.endDepth}m)</span>
-                <span style="font-size: 11px; color: #475569;">
-                    Pipa: ${openHole.pipeIndex + 1} (${pipeSegments[openHole.pipeIndex]?.start || 0}m - ${pipeSegments[openHole.pipeIndex]?.end || 0}m)
-                </span>
+                <span class="openhole-depth">Open Hole: ${openHole.startDepth.toFixed(1)}m - ${openHole.endDepth.toFixed(1)}m</span>
+                <span class="openhole-description">Ukuran: ${openHole.size.toFixed(1)}m</span>
+                ${relativeInfo}
             </div>
             <div class="openhole-delete" onclick="hapusOpenHole()">Hapus</div>
         </div>
     `;
 }
 
+function updateDetailInfo(minDepth, maxDepth) {
+    const saringanDetails = saringanPosisi.length
+        ? saringanPosisi
+            .sort((a, b) => a.depth - b.depth)
+            .map(s => {
+                const saringanEnd = s.depth + s.size;
+                let info = `${s.depth}m - ${saringanEnd}m`;
+                if (groundLevelSet) {
+                    const relStart = s.depth - groundLevel;
+                    const relEnd = saringanEnd - groundLevel;
+                    info += ` (${relStart.toFixed(1)}-${relEnd.toFixed(1)}m relatif)`;
+                }
+                return info;
+            })
+            .join(', ')
+        : '-';
+
+    let openHoleDetail = openHole 
+        ? `${openHole.startDepth}m-${openHole.endDepth}m` 
+        : '-';
+
+    if (openHole && groundLevelSet) {
+        const relStart = openHole.startDepth - groundLevel;
+        const relEnd = openHole.endDepth - groundLevel;
+        openHoleDetail += ` (${relStart.toFixed(1)}-${relEnd.toFixed(1)}m relatif)`;
+    }
+
+    let detailHTML = `<strong>Detail Pipa Sumur Bor:</strong>`;
+    
+    if (pipeSegments.length > 0) {
+        const firstPipe = pipeSegments[0];
+        const lastPipe = pipeSegments[pipeSegments.length - 1];
+        
+        detailHTML += `<div>• Sistem koordinat: ${minDepth.toFixed(1)}m s/d ${maxDepth.toFixed(1)}m</div>`;
+        detailHTML += `<div>• Kedalaman total pipa: ${currentDepth} m</div>`;
+        
+        if (groundLevelSet) {
+            const pipeTopRel = firstPipe.start - groundLevel;
+            const pipeBottomRel = lastPipe.end - groundLevel;
+            
+            detailHTML += `<div>• Pipa relatif ke tanah: ${pipeTopRel.toFixed(1)}m s/d ${pipeBottomRel.toFixed(1)}m</div>`;
+            
+            if (pipeTopRel < 0) {
+                detailHTML += `<div>• Pipa memanjang ${Math.abs(pipeTopRel).toFixed(1)}m di atas tanah</div>`;
+            }
+        }
+    }
+    
+    if (groundLevelSet) {
+        detailHTML += `<div>• Permukaan tanah: ${groundLevel} m (dalam sistem koordinat)</div>`;
+        
+        if (groundLevel < 0) {
+            detailHTML += `<div>• Tanah berada ${Math.abs(groundLevel).toFixed(1)}m di atas dasar sistem</div>`;
+        }
+    }
+    
+    if (pipeSegments.length > 0) {
+        detailHTML += `<div>• Jumlah segmen pipa: ${pipeSegments.length}</div>`;
+        detailHTML += `<div>• Jumlah saringan: ${saringanPosisi.length} unit</div>`;
+        
+        if (saringanPosisi.length > 0) {
+            detailHTML += `<div>• Posisi saringan: ${saringanDetails}</div>`;
+        }
+        
+        if (openHole) {
+            detailHTML += `<div>• Open hole: ${openHoleDetail}</div>`;
+        }
+    } else {
+        detailHTML += `<div>• Belum ada pipa dibuat</div>`;
+    }
+    
+    detailInfo.innerHTML = detailHTML;
+}
+
 // CRUD operations
+function setGroundLevel() {
+    const groundLevelValue = parseFloat(document.getElementById("groundLevelInput").value);
+    
+    if (isNaN(groundLevelValue)) {
+        showNotification("Masukkan titik acuan permukaan tanah yang valid", "error", 3000);
+        return;
+    }
+    
+    // Boleh negatif (untuk di atas pipa) atau positif (untuk di bawah pipa)
+    if (groundLevelValue < -50 || groundLevelValue > 100) {
+        showNotification("Titik acuan antara -50m sampai 100m", "error", 3000);
+        return;
+    }
+    
+    groundLevel = groundLevelValue;
+    groundLevelSet = true;
+    
+    // Update tampilan
+    updateGroundLevelInfo();
+    
+    // Gambar ulang visualisasi
+    drawVisualization();
+    updatePipeList();
+    updateSaringanList();
+    
+    let positionDesc = "";
+    if (groundLevel < 0) {
+        positionDesc = `${Math.abs(groundLevel).toFixed(1)}m di atas dasar sistem`;
+    } else if (groundLevel > 0) {
+        positionDesc = `${groundLevel.toFixed(1)}m di bawah dasar sistem`;
+    } else {
+        positionDesc = "sama dengan dasar sistem";
+    }
+    
+    showNotification(`Titik acuan permukaan tanah ditetapkan: ${groundLevel}m (${positionDesc})`, "success", 4000);
+}
+
+function hapusGroundLevel() {
+    if (!groundLevelSet) return;
+    
+    groundLevel = 0;
+    groundLevelSet = false;
+    updateGroundLevelInfo();
+    drawVisualization();
+    
+    showNotification("Titik acuan permukaan tanah berhasil dihapus", "success", 3000);
+}
+
 function hapusPipa(index) {
     const deletedSegment = pipeSegments[index];
     
-    // Hapus open hole jika ada di pipa yang dihapus
-    if (openHole && openHole.pipeIndex === index) {
-        openHole = null;
-        updateOpenHoleInfo();
-    }
-    
-    // Update pipeIndex untuk open hole jika perlu
-    if (openHole && openHole.pipeIndex > index) {
-        openHole.pipeIndex -= 1;
-    }
-    
-    // Hapus saringan yang ada di pipa yang dihapus
     let deletedSaringanCount = 0;
     const deletedSaringanDepths = [];
     
     for (let i = saringanPosisi.length - 1; i >= 0; i--) {
+        const saringanEnd = saringanPosisi[i].depth + saringanPosisi[i].size;
         if (saringanPosisi[i].depth >= deletedSegment.start && 
-            saringanPosisi[i].depth <= deletedSegment.end) {
+            saringanEnd <= deletedSegment.end) {
             deletedSaringanDepths.push(saringanPosisi[i].depth);
             saringanPosisi.splice(i, 1);
             deletedSaringanCount++;
@@ -573,17 +728,13 @@ function hapusPipa(index) {
     pipeSegments.splice(index, 1);
     
     if (pipeSegments.length > 0) {
-        // Sesuaikan semua pipa setelah yang dihapus
-        for (let i = index; i < pipeSegments.length; i++) {
-            if (i === 0) {
-                pipeSegments[i].start = 0;
-                pipeSegments[i].end = pipeSegments[i].end - pipeSegments[i].start;
-            } else {
-                const prevSegment = pipeSegments[i - 1];
-                const segmentLength = pipeSegments[i].end - pipeSegments[i].start;
-                pipeSegments[i].start = prevSegment.end;
-                pipeSegments[i].end = pipeSegments[i].start + segmentLength;
-            }
+        // Recalculate segment positions
+        let currentStart = pipeSegments[0].start;
+        for (let i = 0; i < pipeSegments.length; i++) {
+            const segmentLength = pipeSegments[i].end - pipeSegments[i].start;
+            pipeSegments[i].start = currentStart;
+            pipeSegments[i].end = currentStart + segmentLength;
+            currentStart = pipeSegments[i].end;
         }
         currentDepth = pipeSegments[pipeSegments.length - 1].end;
     } else {
@@ -592,31 +743,66 @@ function hapusPipa(index) {
         updateOpenHoleInfo();
     }
     
-    // Validasi ulang semua saringan setelah penghapusan
-    let invalidSaringan = 0;
-    for (let i = saringanPosisi.length - 1; i >= 0; i--) {
-        const saringan = saringanPosisi[i];
-        const validation = validateSaringan(saringan.depth, saringan.size);
-        
-        if (!validation.valid) {
-            saringanPosisi.splice(i, 1);
-            invalidSaringan++;
-        }
-    }
-    
-    if (invalidSaringan > 0) {
-        showNotification(`${invalidSaringan} saringan dihapus karena tidak valid setelah penghapusan pipa`, 'warning', 4000);
-    }
-    
     drawVisualization();
     updatePipeList();
     updateSaringanList();
     
     let notificationMessage = `Segmen pipa ke-${index + 1} berhasil dihapus`;
     if (deletedSaringanCount > 0) {
-        notificationMessage += ` (${deletedSaringanCount} saringan ikut terhapus)`;
+        notificationMessage += ` (${deletedSaringanCount} saringan ikut terhapus: ${deletedSaringanDepths.map(d => `${d}m`).join(', ')})`;
     }
     showNotification(notificationMessage, 'success', 4000);
+}
+
+function updateVisualization() {
+    const depth = parseFloat(depthInput.value);
+    const diameterInch = parseFloat(document.getElementById("pipeDiameter").value);
+
+    if (!depth || depth <= 0) {
+        showNotification("Masukkan panjang pipa yang valid", "error");
+        return;
+    }
+
+    if (!diameterInch || diameterInch <= 0) {
+        showNotification("Masukkan diameter pipa yang valid", "error");
+        return;
+    }
+
+    // Hitung startDepth
+    let startDepth;
+    if (pipeSegments.length === 0) {
+        // Pipa pertama dimulai dari 0 dalam sistem koordinat
+        startDepth = 0;
+    } else {
+        // Pipa berikutnya lanjut dari pipa terakhir
+        startDepth = currentDepth;
+    }
+    
+    const endDepth = startDepth + depth;
+
+    pipeSegments.push({
+        start: startDepth,
+        end: endDepth,
+        diameter: diameterInch,
+        widthPx: diameterInch * inchToPixel
+    });
+
+    currentDepth = endDepth;
+
+    drawVisualization();
+    updatePipeList();
+
+    depthInput.value = "";
+    document.getElementById("pipeDiameter").value = "";
+
+    // Tampilkan notifikasi dengan info posisi relatif
+    let message = `Pipa ${diameterInch}" ditambahkan: ${startDepth}m – ${endDepth}m`;
+    if (groundLevelSet) {
+        const pipeTopRel = startDepth - groundLevel;
+        const pipeBottomRel = endDepth - groundLevel;
+        message += `\n(Posisi relatif: ${pipeTopRel.toFixed(1)}m s/d ${pipeBottomRel.toFixed(1)}m dari tanah)`;
+    }
+    showNotification(message, "success", 4000);
 }
 
 function addSaringan() {
@@ -625,47 +811,78 @@ function addSaringan() {
         return;
     }
 
-    const depth = parseFloat(saringanDepth.value);
+    const depth = parseFloat(saringanDepth.value);  // Sekarang ini akan menjadi ATAS saringan
     const size = parseFloat(saringanSize.value);
 
-    if (!depth || depth <= 0) {
-        showNotification("Masukkan kedalaman saringan yang valid", 'error', 3000);
+    // Validasi menggunakan sistem koordinat pipa
+    if (!depth || depth < 0 || depth > currentDepth) {
+        showNotification(`Masukkan kedalaman yang valid (0-${currentDepth}m dalam sistem)`, 'error', 3000);
         return;
     }
 
-    if (!size || size <= 0) {
-        showNotification("Masukkan ukuran saringan yang valid", 'error', 3000);
+    if (!size || size <= 0 || size > currentDepth) {
+        showNotification(`Masukkan ukuran saringan yang valid (0.1-${currentDepth}m)`, 'error', 3000);
         return;
     }
 
-    // Validasi saringan
-    const validation = validateSaringan(depth, size);
-    
-    if (!validation.valid) {
-        let errorMessage = validation.message;
-        if (validation.details) {
-            errorMessage += `\n${validation.details}`;
+    // Hitung batas atas dan bawah saringan
+    const saringanStart = depth;  // Atas saringan = kedalaman input
+    const saringanEnd = depth + size;  // Bawah saringan = atas + ukuran
+
+    // Cari pipa yang mengandung seluruh rentang saringan ini
+    const pipe = pipeSegments.find(p => saringanStart >= p.start && saringanEnd <= p.end);
+
+    if (!pipe) {
+        showNotification(`Saringan berada di luar pipa! Pastikan saringan (${saringanStart}m - ${saringanEnd}m) berada dalam pipa`, 'error', 3000);
+        return;
+    }
+
+    // Cek tabrakan dengan saringan lain
+    for (const existingSaringan of saringanPosisi) {
+        const existingStart = existingSaringan.depth;  // Sudah atas saringan
+        const existingEnd = existingSaringan.depth + existingSaringan.size;
+
+        if ((saringanStart >= existingStart && saringanStart <= existingEnd) ||
+            (saringanEnd >= existingStart && saringanEnd <= existingEnd) ||
+            (saringanStart <= existingStart && saringanEnd >= existingEnd)) {
+            showNotification(`Saringan tumpang tindih dengan saringan di kedalaman ${existingSaringan.depth}m`, 'error', 4000);
+            return;
         }
-        showNotification(errorMessage, 'error', 5000);
-        return;
     }
 
-    saringanPosisi.push({ depth, size });
+    // Cek tabrakan dengan open hole
+    if (openHole) {
+        if (saringanEnd >= openHole.startDepth) {
+            showNotification(`Saringan terlalu dekat dengan open hole (open hole mulai dari ${openHole.startDepth}m)`, 'error', 4000);
+            return;
+        }
+    }
+
+    // Simpan dengan posisi ATAS saringan
+    saringanPosisi.push({ depth, size });  // depth sekarang = atas saringan
     saringanDepth.value = '';
     saringanSize.value = '3';
 
     updateSaringanList();
     drawVisualization();
 
-    showNotification(`Saringan berhasil ditambahkan di kedalaman ${depth}m (ukuran: ${size}m)`, 'success', 3000);
+    // Tampilkan notifikasi dengan info posisi relatif
+    let message = `Saringan berhasil ditambahkan: ${saringanStart}m - ${saringanEnd}m (ukuran: ${size}m)`;
+    if (groundLevelSet) {
+        const relativeStart = depth - groundLevel;
+        const relativeEnd = saringanEnd - groundLevel;
+        message += `\n(Posisi relatif terhadap tanah: ${relativeStart.toFixed(1)}m s/d ${relativeEnd.toFixed(1)}m)`;
+    }
+    showNotification(message, 'success', 4000);
 }
 
 function hapusSaringan(index) {
     const saringan = saringanPosisi[index];
+    const saringanEnd = saringan.depth + saringan.size;
     saringanPosisi.splice(index, 1);
     updateSaringanList();
     drawVisualization();
-    showNotification(`Saringan di kedalaman ${saringan.depth}m berhasil dihapus`, 'success', 3000);
+    showNotification(`Saringan di posisi ${saringan.depth}m - ${saringanEnd}m berhasil dihapus`, 'success', 3000);
 }
 
 function setOpenHole() {
@@ -676,66 +893,42 @@ function setOpenHole() {
 
     const depth = parseFloat(openHoleDepth.value);
 
-    if (!depth || depth <= 0) {
-        showNotification("Masukkan kedalaman open hole yang valid", 'error', 3000);
+    // Validasi dalam sistem koordinat pipa
+    if (!depth || depth < 0 || depth > currentDepth) {
+        showNotification(`Masukkan kedalaman open hole yang valid (0-${currentDepth}m dalam sistem)`, 'error', 3000);
         return;
     }
 
-    // Dapatkan pipa terakhir
-    const lastPipe = pipeSegments[pipeSegments.length - 1];
-    
-    // Validasi: Open hole harus di pipa terakhir
-    if (depth < lastPipe.start || depth > lastPipe.end) {
-        showNotification(`Open hole harus berada di pipa terakhir (${lastPipe.start}m - ${lastPipe.end}m)`, 'error', 3000);
-        return;
-    }
-
-    // Hitung ukuran open hole (dari depth hingga ujung pipa terakhir)
-    const openHoleSize = lastPipe.end - depth;
-    
-    // Validasi ukuran minimum
-    if (openHoleSize < 1) {
-        showNotification("Ukuran open hole minimal 1 meter", 'error', 3000);
-        return;
-    }
-
-    // Cek tabrakan dengan saringan di area open hole
-    let saringanBertabrakan = null;
+    // Pastikan tidak ada saringan di area open hole
+    const openHoleStart = depth;
     for (const saringan of saringanPosisi) {
-        const saringanTop = saringan.depth - saringan.size / 2;
-        const saringanBottom = saringan.depth + saringan.size / 2;
+        const saringanEnd = saringan.depth + saringan.size;
         
-        // Cek jika saringan ada di pipa terakhir dan overlap dengan area open hole
-        const saringanPipe = pipeSegments.find(p => saringan.depth >= p.start && saringan.depth <= p.end);
-        if (saringanPipe && saringanPipe.start === lastPipe.start) {
-            if ((saringanBottom > depth) || 
-                (saringanTop > depth && saringanTop < lastPipe.end) ||
-                (saringanTop <= depth && saringanBottom >= depth)) {
-                saringanBertabrakan = saringan;
-                break;
-            }
+        if (saringanEnd >= openHoleStart) {
+            showNotification(`Terdapat saringan di posisi ${saringan.depth}m - ${saringanEnd}m yang bertabrakan dengan open hole`, 'error', 4000);
+            return;
         }
     }
 
-    if (saringanBertabrakan) {
-        showNotification(`Terdapat saringan di kedalaman ${saringanBertabrakan.depth}m yang bertabrakan dengan open hole`, 'error', 4000);
-        return;
-    }
-
-    // Set open hole
     openHole = {
         depth: depth,
         startDepth: depth,
-        endDepth: lastPipe.end,
-        size: openHoleSize,
-        pipeIndex: pipeSegments.length - 1
+        endDepth: currentDepth,
+        size: currentDepth - depth
     };
 
     openHoleDepth.value = '';
     updateOpenHoleInfo();
     drawVisualization();
 
-    showNotification(`Open hole berhasil diatur di kedalaman ${depth}m (ukuran: ${openHoleSize.toFixed(1)}m)`, 'success', 3000);
+    // Tampilkan notifikasi dengan info posisi relatif
+    let message = `Open hole berhasil diatur di kedalaman ${depth}m - ${currentDepth}m (${currentDepth - depth}m)`;
+    if (groundLevelSet) {
+        const relativeStart = depth - groundLevel;
+        const relativeEnd = currentDepth - groundLevel;
+        message += `\n(Posisi relatif terhadap tanah: ${relativeStart.toFixed(1)}m s/d ${relativeEnd.toFixed(1)}m)`;
+    }
+    showNotification(message, 'success', 4000);
 }
 
 function hapusOpenHole() {
@@ -755,33 +948,59 @@ function drawVisualization() {
     const MIN_CANVAS_HEIGHT = 600;
     const EXTRA_HEIGHT_PER_100M = 150;
 
+    // Hitung depth maksimum untuk scaling
+    // Sekarang perlu mempertimbangkan posisi ground level dan pipa
+    let maxDepthInSystem = currentDepth;
+    let minDepthInSystem = 0;
+    
+    if (groundLevelSet) {
+        // Tentukan range yang perlu ditampilkan
+        maxDepthInSystem = Math.max(currentDepth, groundLevel);
+        minDepthInSystem = Math.min(0, groundLevel);
+        
+        // Jika ada pipa di atas ground level, perlu ruang negatif
+        if (groundLevel < 0) {
+            minDepthInSystem = groundLevel;
+        }
+    }
+    
+    const totalDepthRange = maxDepthInSystem - minDepthInSystem;
+    
     canvas.height = Math.max(
         MIN_CANVAS_HEIGHT,
-        (currentDepth / 100) * EXTRA_HEIGHT_PER_100M + 300
+        (totalDepthRange / 100) * EXTRA_HEIGHT_PER_100M + 300
     );
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (currentDepth === 0) {
+    if (currentDepth === 0 && !groundLevelSet) {
         detailInfo.innerHTML = `
             <strong>Instruksi Penggunaan:</strong>
             <div>1. Masukkan kedalaman pipa (misal: 45m)</div>
-            <div>2. Klik "Tambah Pipa" untuk membuat pipa</div>
-            <div>3. Masukkan kedalaman dan ukuran saringan</div>
-            <div>4. Klik "Tambah Saringan" untuk menambah</div>
-            <div>5. Atur open hole (opsional) di bagian bawah</div>
-            <div>6. Klik "Reset Semua" untuk mulai ulang</div>
+            <div>2. Atur titik acuan permukaan tanah (jika ada)</div>
+            <div>3. Klik "Tambah Pipa" untuk membuat pipa</div>
+            <div>4. Masukkan kedalaman dan ukuran saringan</div>
+            <div>5. Klik "Tambah Saringan" untuk menambah</div>
+            <div>6. Atur open hole (opsional) di bagian bawah</div>
+            <div>7. Klik "Reset Semua" untuk mulai ulang</div>
         `;
         hoverDetails.innerHTML = "Buat pipa terlebih dahulu";
         return;
     }
 
     const usableHeight = canvas.height - TOP_MARGIN - BOTTOM_MARGIN;
-    const scale = usableHeight / currentDepth;
+    const scale = usableHeight / totalDepthRange;
 
     ctx.fillStyle = "#f1f5f9";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Draw ground level line - posisi berdasarkan groundLevel
+    if (groundLevelSet) {
+        const groundY = TOP_MARGIN + (groundLevel - minDepthInSystem) * scale;
+        drawGroundLevelLine(groundY);
+    }
+
+    ctx.setLineDash([]);
     ctx.font = "12px Inter";
     ctx.fillStyle = "#334155";
     ctx.strokeStyle = "#475569";
@@ -790,17 +1009,27 @@ function drawVisualization() {
     let lastLabelY = -Infinity;
     const MIN_LABEL_DISTANCE = 25;
 
-    for (let m = 0; m <= currentDepth; m++) {
-        const y = TOP_MARGIN + (m * scale);
+    // Draw depth markers - sekarang dengan range negatif jika ada
+    for (let m = Math.floor(minDepthInSystem); m <= Math.ceil(maxDepthInSystem); m++) {
+        const y = TOP_MARGIN + (m - minDepthInSystem) * scale;
 
+        // Gambar marker di kiri
         ctx.beginPath();
         ctx.moveTo(canvas.width/2 - 15, y);
         ctx.lineTo(canvas.width/2 - 5, y);
         ctx.stroke();
 
+        // Label setiap SCALE_STEP
         if (m % SCALE_STEP === 0 && y - lastLabelY > MIN_LABEL_DISTANCE) {
-            ctx.fillText(`${m} m`, canvas.width/2 - 60, y + 4);
+            let label = `${m}m`;
+            if (groundLevelSet && m === Math.round(groundLevel)) {
+                label = "Tanah";
+            }
+            
+            ctx.fillStyle = "#334155";
+            ctx.fillText(label, canvas.width/2 - 60, y + 4);
 
+            // Garis lebih panjang untuk major markers
             ctx.beginPath();
             ctx.moveTo(canvas.width/2 - 25, y);
             ctx.lineTo(canvas.width/2 - 5, y);
@@ -810,146 +1039,78 @@ function drawVisualization() {
         }
     }
 
-    let currentY = TOP_MARGIN;
+    // Draw pipe segments jika ada
+    if (pipeSegments.length > 0) {
+        pipeSegments.forEach((pipe, index) => {
+            const segmentHeight = pipe.end - pipe.start;
+            const y = TOP_MARGIN + (pipe.start - minDepthInSystem) * scale;
+            const heightPx = segmentHeight * scale;
+            const x = canvas.width / 2 - pipe.widthPx / 2;
 
-    // Draw pipe segments
-    pipeSegments.forEach((pipe, index) => {
-        const segmentDepth = pipe.end - pipe.start;
-        const heightPx = segmentDepth * scale;
-        const x = canvas.width / 2 - pipe.widthPx / 2;
+            // Tentukan apakah perlu indikator khusus
+            const showTopIndicator = index === 0;
+            const showBottomIndicator = index === pipeSegments.length - 1;
 
-        drawPipaUtama(x, currentY, pipe.widthPx, heightPx, pipe.end, {
-            showTopIndicator: index === 0,
-            showBottomIndicator: index === pipeSegments.length - 1
+            drawPipaUtama(x, y, pipe.widthPx, heightPx, pipe.end, {
+                showTopIndicator,
+                showBottomIndicator
+            });
+
+            // Simpan info untuk interaksi
+            pipe._render = { 
+                x, 
+                y, 
+                height: heightPx,
+                start: pipe.start,
+                end: pipe.end
+            };
+            
+            // Tambah ke components untuk tooltip
+            let pipeInfo = `Pipa ${pipe.diameter}" - ${pipe.start.toFixed(1)}m s/d ${pipe.end.toFixed(1)}m`;
+            if (groundLevelSet) {
+                const relativeStart = pipe.start - groundLevel;
+                const relativeEnd = pipe.end - groundLevel;
+                pipeInfo += `\nRelatif: ${relativeStart.toFixed(1)}m s/d ${relativeEnd.toFixed(1)}m dari tanah`;
+            }
+            
+            components.push({
+                type: "pipe",
+                x, y, width: pipe.widthPx, height: heightPx,
+                info: pipeInfo
+            });
         });
 
-        pipe._render = { x, y: currentY, height: heightPx };
-        currentY += heightPx;
-    });
-
-    // Draw open hole if exists (HANYA di pipa terakhir)
-    if (openHole && pipeSegments.length > 0) {
-        const pipeIndex = openHole.pipeIndex || pipeSegments.length - 1;
-        const pipe = pipeSegments[pipeIndex];
-        
-        if (pipe && pipe._render) {
-            // Pastikan open hole hanya di pipa terakhir
-            if (pipeIndex === pipeSegments.length - 1) {
-                // Hitung posisi open hole relatif terhadap pipa
-                const localStart = openHole.startDepth - pipe.start;
-                const openHoleHeightPx = openHole.size * scale;
-                
-                // Pastikan open hole dimulai dari posisi yang benar dan mengisi sampai bawah pipa
-                const openHoleY = pipe._render.y + (localStart * scale);
-                
-                drawOpenHole(pipe._render.x, openHoleY, pipe.widthPx, openHoleHeightPx);
-            }
+        // Draw open hole if exists
+        if (openHole && pipeSegments.length > 0) {
+            const openHoleStartY = TOP_MARGIN + (openHole.startDepth - minDepthInSystem) * scale;
+            const openHoleHeightPx = openHole.size * scale;
+            const lastPipe = pipeSegments[pipeSegments.length - 1];
+            
+            drawOpenHole(lastPipe._render.x, openHoleStartY, lastPipe.widthPx, openHoleHeightPx);
         }
+
+        // Draw filters - sekarang menggunakan ATAS saringan sebagai referensi
+        saringanPosisi.forEach(saringan => {
+            const pipe = pipeSegments.find(p => {
+                const saringanEnd = saringan.depth + saringan.size;
+                return saringan.depth >= p.start && saringanEnd <= p.end;
+            });
+
+            if (!pipe || !pipe._render) return;
+
+            const topY = TOP_MARGIN + (saringan.depth - minDepthInSystem) * scale;  // ATAS saringan
+            const saringanHeightPx = saringan.size * scale;  // Tinggi berdasarkan ukuran
+
+            drawSaringan(pipe._render.x, topY, pipe.widthPx, saringanHeightPx, saringan.depth, saringan.size);
+        });
     }
-
-    // Draw filters dengan validasi
-    saringanPosisi.forEach(saringan => {
-        const pipe = pipeSegments.find(p => saringan.depth >= p.start && saringan.depth <= p.end);
-
-        if (!pipe || !pipe._render) return;
-
-        const localDepth = saringan.depth - pipe.start;
-        const centerY = pipe._render.y + (localDepth * scale);
-        const saringanHeightPx = saringan.size * scale;
-        const topY = centerY - saringanHeightPx / 2;
-        
-        // Validasi apakah saringan keluar dari pipa
-        const saringanAtas = saringan.depth - (saringan.size / 2);
-        const saringanBawah = saringan.depth + (saringan.size / 2);
-        const isOutOfBounds = saringanAtas < pipe.start || saringanBawah > pipe.end;
-
-        drawSaringan(pipe._render.x, topY, pipe.widthPx, saringanHeightPx, saringan.depth, saringan.size, isOutOfBounds);
-    });
 
     // Update detail info
-    const saringanDetails = saringanPosisi.length
-        ? saringanPosisi
-            .sort((a, b) => a.depth - b.depth)
-            .map(s => `${s.depth}m (${s.size}m)`)
-            .join(', ')
-        : '-';
-
-    let openHoleDetail = openHole 
-        ? `${openHole.startDepth}m - ${openHole.endDepth}m (${openHole.size.toFixed(1)}m)` 
-        : '-';
-
-    // Hitung saringan yang valid
-    const validSaringanCount = saringanPosisi.filter(s => {
-        const pipe = pipeSegments.find(p => s.depth >= p.start && s.depth <= p.end);
-        if (!pipe) return false;
-        const saringanAtas = s.depth - (s.size / 2);
-        const saringanBawah = s.depth + (s.size / 2);
-        return !(saringanAtas < pipe.start || saringanBawah > pipe.end);
-    }).length;
-
-    const invalidSaringanCount = saringanPosisi.length - validSaringanCount;
-
-    detailInfo.innerHTML = `
-        <strong>Detail Pipa:</strong>
-        <div>• Kedalaman total: ${currentDepth} meter</div>
-        <div>• Jumlah segmen pipa: ${pipeSegments.length}</div>
-        <div>• Jumlah saringan: ${saringanPosisi.length} unit (${validSaringanCount} valid, ${invalidSaringanCount} invalid)</div>
-        <div>• Posisi & ukuran saringan: ${saringanDetails}</div>
-        <div>• Open hole: ${openHoleDetail}</div>
-        <div>• Skala visualisasi: 1 meter = ${scale.toFixed(2)} pixel</div>
-    `;
-}
-
-function updateVisualization() {
-    const depth = parseFloat(depthInput.value);
-    const diameterInch = parseFloat(document.getElementById("pipeDiameter").value);
-
-    if (!depth || depth <= 0) {
-        showNotification("Masukkan panjang pipa yang valid", "error");
-        return;
-    }
-
-    if (!diameterInch || diameterInch <= 0) {
-        showNotification("Masukkan diameter pipa yang valid", "error");
-        return;
-    }
-
-    const startDepth = currentDepth;
-    const endDepth = startDepth + depth;
-
-    // Update open hole jika ada
-    if (openHole) {
-        // Jika open hole ada di pipa terakhir sebelumnya, sesuaikan
-        if (openHole.pipeIndex === pipeSegments.length - 1) {
-            openHole.endDepth = endDepth;
-            openHole.size = endDepth - openHole.startDepth;
-            updateOpenHoleInfo();
-        }
-    }
-
-    pipeSegments.push({
-        start: startDepth,
-        end: endDepth,
-        diameter: diameterInch,
-        widthPx: diameterInch * inchToPixel
-    });
-
-    currentDepth = endDepth;
-    drawVisualization();
-    updatePipeList();
-
-    depthInput.value = "";
-    document.getElementById("pipeDiameter").value = "";
-
-    showNotification(
-        `Pipa ${diameterInch}" ditambahkan (${startDepth}m – ${endDepth}m)`,
-        "success",
-        3000
-    );
+    updateDetailInfo(minDepthInSystem, maxDepthInSystem);
 }
 
 function resetAll() {
-    if (currentDepth === 0 && saringanPosisi.length === 0 && !openHole) {
+    if (currentDepth === 0 && saringanPosisi.length === 0 && !openHole && !groundLevelSet) {
         showNotification("Tidak ada data untuk di-reset", 'info', 2000);
         return;
     }
@@ -960,14 +1121,18 @@ function resetAll() {
         saringanPosisi = [];
         pipeSegments = [];
         openHole = null;
+        groundLevel = 0;
+        groundLevelSet = false;
         depthInput.value = "";
         saringanDepth.value = '';
         saringanSize.value = '3';
         openHoleDepth.value = "";
+        groundLevelInput.value = "";
         document.getElementById("pipeDiameter").value = "";
         updateSaringanList();
         updatePipeList();
         updateOpenHoleInfo();
+        updateGroundLevelInfo();
         drawVisualization();
         showNotification("Semua data berhasil direset", 'success', 3000);
     }
@@ -994,37 +1159,57 @@ canvas.addEventListener("mousemove", (e) => {
     if (foundComponent) {
         tooltip.style.left = (mouseX + 15) + "px";
         tooltip.style.top = (mouseY + 15) + "px";
-        tooltip.innerHTML = foundComponent.info;
+        tooltip.innerHTML = foundComponent.info.replace(/\n/g, '<br>');
         tooltip.style.opacity = 1;
         
         hoverDetails.innerHTML = `
             <div><strong>${foundComponent.type.toUpperCase()}</strong></div>
-            <div><small>${foundComponent.info}</small></div>
+            <div style="font-size: 11px;"><small>${foundComponent.info.split('\n')[0]}</small></div>
         `;
     } else {
-        const pipeX = canvas.width/2 - PIPE_WIDTH/2;
+        // Hitung posisi dalam sistem koordinat
         const usableHeight = canvas.height - TOP_MARGIN - BOTTOM_MARGIN;
-        const scale = currentDepth > 0 ? usableHeight / currentDepth : 0;
         
-        if (mouseX >= pipeX && mouseX <= pipeX + PIPE_WIDTH && 
-            mouseY >= TOP_MARGIN && mouseY <= TOP_MARGIN + (currentDepth * scale)) {
+        // Tentukan minDepth berdasarkan apakah ada ground level
+        let minDepth = 0;
+        let maxDepth = currentDepth;
+        if (groundLevelSet) {
+            minDepth = Math.min(0, groundLevel);
+            maxDepth = Math.max(currentDepth, groundLevel);
+        }
+        const totalDepthRange = maxDepth - minDepth;
+        const scale = totalDepthRange > 0 ? usableHeight / totalDepthRange : 0;
+        
+        if (mouseY >= TOP_MARGIN && mouseY <= canvas.height - BOTTOM_MARGIN) {
+            const depthInSystem = minDepth + ((mouseY - TOP_MARGIN) / scale);
             
-            const depthAtMouse = ((mouseY - TOP_MARGIN) / scale).toFixed(1);
-            hoverDetails.innerHTML = `
-                <div><strong>POSISI PIPA</strong></div>
-                <div><small>Kedalaman: ${depthAtMouse} meter</small></div>
-                <div><small>Koordinat: (${mouseX.toFixed(0)}, ${mouseY.toFixed(0)})</small></div>
-            `;
+            let infoText = `<div><strong>POSISI</strong></div>`;
+            infoText += `<div style="font-size: 11px;"><small>Sistem koordinat: ${depthInSystem.toFixed(1)} m</small></div>`;
+            
+            if (groundLevelSet) {
+                const relativeToGround = depthInSystem - groundLevel;
+                infoText += `<div style="font-size: 11px;"><small>Relatif ke tanah: ${relativeToGround.toFixed(1)} m</small></div>`;
+                
+                if (Math.abs(depthInSystem - groundLevel) < 0.5) {
+                    infoText += `<div style="font-size: 11px; color: #d97706;"><small>Tepat di permukaan tanah</small></div>`;
+                } else if (depthInSystem < groundLevel) {
+                    infoText += `<div style="font-size: 11px; color: #dc2626;"><small>${Math.abs(relativeToGround).toFixed(1)} m di atas permukaan tanah</small></div>`;
+                } else {
+                    infoText += `<div style="font-size: 11px; color: #059669;"><small>${relativeToGround.toFixed(1)} m di bawah permukaan tanah</small></div>`;
+                }
+            }
+            
+            hoverDetails.innerHTML = infoText;
         } else {
-            hoverDetails.innerHTML = "Arahkan mouse ke komponen pipa";
+            hoverDetails.innerHTML = "Arahkan mouse ke area visualisasi";
         }
         tooltip.style.opacity = 0;
     }
 });
 
 function downloadPDF() {
-    if (currentDepth === 0) {
-        showNotification("Buat pipa terlebih dahulu sebelum download PDF", 'warning', 3000);
+    if (currentDepth === 0 && !groundLevelSet) {
+        showNotification("Buat pipa atau atur titik acuan terlebih dahulu sebelum download PDF", 'warning', 3000);
         return;
     }
     
@@ -1061,14 +1246,20 @@ function downloadPDF() {
         const y = 40;
         
         pdf.setFontSize(16);
-        pdf.text("LAPORAN VISUALISASI PIPA", pdfWidth/2, 20, { align: "center" });
+        pdf.text("LAPORAN VISUALISASI PIPA SUMUR BOR", pdfWidth/2, 20, { align: "center" });
         
         pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
         
         let detailY = y + imgHeight + 15;
         
-        const detailLines = 7 + (saringanPosisi.length * 1);
-        const detailHeight = detailLines * 6;
+        // Hitung berapa banyak baris yang akan ditampilkan
+        let lineCount = 5;
+        if (groundLevelSet) lineCount += 2;
+        if (pipeSegments.length > 0) lineCount += 2;
+        if (saringanPosisi.length > 0) lineCount += 1;
+        if (openHole) lineCount += 1;
+        
+        const detailHeight = lineCount * 6;
         
         if (detailY + detailHeight > pdfHeight - 20) {
             pdf.addPage();
@@ -1080,41 +1271,74 @@ function downloadPDF() {
         detailY += 8;
         
         pdf.setFontSize(10);
-        pdf.text(`• Kedalaman pipa: ${currentDepth} meter`, 20, detailY);
-        detailY += 6;
-        pdf.text(`• Jumlah segmen pipa: ${pipeSegments.length}`, 20, detailY);
-        detailY += 6;
-        pdf.text(`• Jumlah saringan: ${saringanPosisi.length} unit`, 20, detailY);
-        detailY += 6;
         
-        if (openHole) {
-            pdf.text(`• Open hole: ${openHole.startDepth}m - ${openHole.endDepth}m (${openHole.size.toFixed(1)}m)`, 20, detailY);
+        if (pipeSegments.length > 0) {
+            pdf.text(`• Kedalaman total pipa: ${currentDepth} m`, 20, detailY);
             detailY += 6;
         }
         
-        if (saringanPosisi.length > 0) {
-            detailY += 8;
-            pdf.text(`• Posisi & ukuran saringan:`, 20, detailY);
+        if (groundLevelSet) {
+            pdf.text(`• Permukaan tanah: ${groundLevel} m (dalam sistem koordinat)`, 20, detailY);
+            detailY += 6;
             
-            saringanPosisi.sort((a,b)=>a.depth - b.depth).forEach(saringan => {
+            if (groundLevel < 0) {
+                pdf.text(`• Tanah ${Math.abs(groundLevel).toFixed(1)}m di atas dasar sistem`, 20, detailY);
                 detailY += 6;
-                if (detailY > pdfHeight - 20) {
-                    pdf.addPage();
-                    detailY = 20;
-                }
+            }
+            
+            // Info posisi relatif pipa
+            if (pipeSegments.length > 0) {
+                const firstPipe = pipeSegments[0];
+                const lastPipe = pipeSegments[pipeSegments.length - 1];
+                const pipeTopRel = firstPipe.start - groundLevel;
+                const pipeBottomRel = lastPipe.end - groundLevel;
                 
-                // Validasi saringan
-                const pipe = pipeSegments.find(p => saringan.depth >= p.start && saringan.depth <= p.end);
-                const saringanAtas = saringan.depth - (saringan.size / 2);
-                const saringanBawah = saringan.depth + (saringan.size / 2);
-                const isValid = pipe && !(saringanAtas < pipe.start || saringanBawah > pipe.end);
-                
-                const status = isValid ? "" : " (INVALID)";
-                pdf.text(`  - ${saringan.depth}m (${saringan.size}m)${status}`, 25, detailY);
-            });
+                pdf.text(`• Pipa relatif ke tanah: ${pipeTopRel.toFixed(1)}m s/d ${pipeBottomRel.toFixed(1)}m`, 20, detailY);
+                detailY += 6;
+            }
         }
         
-        pdf.save("visualisasi_pipa.pdf");
+        if (pipeSegments.length > 0) {
+            pdf.text(`• Jumlah segmen pipa: ${pipeSegments.length}`, 20, detailY);
+            detailY += 6;
+            pdf.text(`• Jumlah saringan: ${saringanPosisi.length} unit`, 20, detailY);
+            detailY += 6;
+            
+            if (openHole) {
+                pdf.text(`• Open hole: ${openHole.startDepth}m - ${openHole.endDepth}m`, 20, detailY);
+                detailY += 6;
+                
+                if (groundLevelSet) {
+                    const relStart = openHole.startDepth - groundLevel;
+                    const relEnd = openHole.endDepth - groundLevel;
+                    pdf.text(`  (${relStart.toFixed(1)}m - ${relEnd.toFixed(1)}m relatif ke tanah)`, 25, detailY);
+                    detailY += 6;
+                }
+            }
+            
+            if (saringanPosisi.length > 0) {
+                detailY += 4;
+                pdf.text(`• Posisi saringan:`, 20, detailY);
+                
+                saringanPosisi.sort((a,b)=>a.depth - b.depth).forEach(saringan => {
+                    detailY += 6;
+                    if (detailY > pdfHeight - 20) {
+                        pdf.addPage();
+                        detailY = 20;
+                    }
+                    const saringanEnd = saringan.depth + saringan.size;
+                    let saringanInfo = `  - ${saringan.depth.toFixed(1)}m - ${saringanEnd.toFixed(1)}m (ukuran: ${saringan.size.toFixed(1)}m)`;
+                    if (groundLevelSet) {
+                        const relStart = saringan.depth - groundLevel;
+                        const relEnd = saringanEnd - groundLevel;
+                        saringanInfo += ` - ${relStart.toFixed(1)}-${relEnd.toFixed(1)}m dari tanah`;
+                    }
+                    pdf.text(saringanInfo, 25, detailY);
+                });
+            }
+        }
+        
+        pdf.save("visualisasi_pipa_sumur_bor.pdf");
         
         showNotification("PDF berhasil diunduh!", 'success', 3000);
     }, 1000);
@@ -1138,14 +1362,19 @@ window.addEventListener("load", () => {
     }
     
     drawVisualization();
+    updateGroundLevelInfo();
     updateOpenHoleInfo();
 });
 
+// Export functions to global scope
 window.updateVisualization = updateVisualization;
 window.addSaringan = addSaringan;
 window.setOpenHole = setOpenHole;
+window.setGroundLevel = setGroundLevel;
+window.hapusGroundLevel = hapusGroundLevel;
 window.hapusSaringan = hapusSaringan;
 window.hapusPipa = hapusPipa;
 window.hapusOpenHole = hapusOpenHole;
 window.resetAll = resetAll;
 window.downloadPDF = downloadPDF;
+window.closeNotification = closeNotification;
