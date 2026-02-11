@@ -6,6 +6,7 @@
     --primary: #2563eb;
     --success: #10b981;
     --danger: #ef4444;
+    --warning: #d97706;
 }
 
 * {
@@ -168,13 +169,10 @@ button {
 
 canvas {
     width: 360px;
-    height: 600px;
+    height: 750px; /* Default lebih tinggi */
     border-radius: 18px;
-    background: #e5e7eb;
-}
-
-#threeContainer {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
 }
 
 .tooltip {
@@ -411,11 +409,49 @@ canvas {
 }
 
 /* ====================== */
+/* GROUND LEVEL STYLES */
+/* ====================== */
+
+.groundlevel-info {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    font-size: 13px;
+}
+
+.groundlevel-info.active {
+    background: #fef3c7;
+    border-color: #fcd34d;
+    border-left: 4px solid var(--warning);
+}
+
+.groundlevel-status {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.groundlevel-status.active {
+    background: var(--warning);
+    color: white;
+    box-shadow: 0 2px 4px rgba(217, 119, 6, 0.2);
+}
+
+.groundlevel-status.inactive {
+    background: #e2e8f0;
+    color: var(--muted);
+}
+
+/* ====================== */
 /* OPEN HOLE STYLES */
 /* ====================== */
 
 .openhole-info {
-    margin-top: 20px;
+    margin-top: 16px;
     padding: 16px;
     background: #f8fafc;
     border-radius: 12px;
@@ -739,7 +775,6 @@ canvas {
 /* MOBILE & TOUCH ENHANCEMENT */
 /* ====================== */
 
-/* Tambahan untuk orientasi landscape di mobile */
 @media (max-height: 600px) and (orientation: landscape) {
     .content {
         grid-template-columns: 1fr 1fr;
@@ -754,7 +789,13 @@ canvas {
         max-height: 80px;
     }
 }
+.negative-level {
+    color: #dc2626 !important;
+}
 
+.positive-level {
+    color: #059669 !important;
+}
 /* Pastikan tooltip tetap berfungsi di mobile */
 @media (hover: none) {
     .tooltip {
@@ -808,3 +849,4 @@ canvas {
         background: linear-gradient(135deg, #fecaca, #fca5a5);
     }
 }
+
