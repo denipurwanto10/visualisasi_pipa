@@ -45,13 +45,25 @@
                             <span class="unit">m</span>
                         </div>
                         <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
-                           Ketinggian Permukaan Tanah Aktual Bisa bernilai positif atau negatif (m)
+                            Ketinggian titik acuan dari titik nol (permukaan tanah aktual)
                         </div>
                         <button onclick="setGroundLevel()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
                             + Atur Titik Acuan
                         </button>
 
-                        <label style="margin-top: 20px;">4. Tambah Saringan</label>
+                        <label style="margin-top: 20px;">4. Muka Air Tanah (MAT)</label>
+                        <div class="input-group">
+                            <input type="number" id="matInput" placeholder="Contoh: -2.0" min="-50" max="50" step="0.1">
+                            <span class="unit">m</span>
+                        </div>
+                        <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
+                            Level muka air tanah relatif terhadap titik acuan
+                        </div>
+                        <button onclick="setMAT()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
+                            + Atur Muka Air Tanah
+                        </button>
+
+                        <label style="margin-top: 20px;">5. Tambah Saringan</label>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
                             <div>
@@ -69,16 +81,22 @@
                             + Tambah Saringan
                         </button>
 
-                        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-                            <label>5. Open Hole (opsional)</label>
-                            <div class="input-group" style="margin-top: 8px;">
-                                <input type="number" id="openHoleDepth" placeholder="Kedalaman open hole" min="1" max="500">
-                                <span class="unit">m</span>
-                            </div>
-                            <button onclick="setOpenHole()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
-                                + Set Open Hole
-                            </button>
-                        </div>
+                       <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+    <label>6. Open Hole (opsional)</label>
+    <div class="input-group" style="margin-top: 8px;">
+        <!-- PERBAIKI PLACEHOLDER -->
+        <input type="number" id="openHoleDepth" placeholder="Ukuran open hole dari bawah pipa" min="1" max="100">
+        <span class="unit">m</span>
+    </div>
+    <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
+        <!-- PERBAIKI DESKRIPSI -->
+        <strong>Penjelasan:</strong> Open hole adalah bagian terbuka di bawah pipa terakhir.<br>
+        Contoh: 5m = open hole sepanjang 5m di bawah pipa terakhir
+    </div>
+    <button onclick="setOpenHole()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
+        + Set Open Hole
+    </button>
+</div>
                         
                         <button onclick="resetAll()" class="btn-danger" style="margin-top: 24px; width: 100%;">Reset Semua</button>
                     </div>
@@ -115,15 +133,26 @@
                         </div>
                     </div>
                     
+                    <div class="mat-info" id="matInfo" style="margin-top: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong>Muka Air Tanah (MAT)</strong>
+                            <span id="matStatus" class="mat-status inactive">Belum diatur</span>
+                        </div>
+                        <div id="matDetails" style="font-size: 12px; color: #64748b;">
+                            Muka air tanah akan ditampilkan sebagai garis biru putus-putus
+                        </div>
+                    </div>
+                    
                     <div id="detailInfo" class="detail-box">
                         <strong>Instruksi Penggunaan:</strong>
                         <div>1. Masukkan kedalaman pipa (misal: 45m)</div>
                         <div>2. Atur titik acuan permukaan tanah (jika ada)</div>
-                        <div>3. Klik "Tambah Pipa" untuk membuat pipa</div>
-                        <div>4. Masukkan kedalaman dan ukuran saringan</div>
-                        <div>5. Klik "Tambah Saringan" untuk menambah</div>
-                        <div>6. Atur open hole (opsional) di bagian bawah</div>
-                        <div>7. Klik "Reset Semua" untuk mulai ulang</div>
+                        <div>3. Atur muka air tanah (MAT) jika diketahui</div>
+                        <div>4. Klik "Tambah Pipa" untuk membuat pipa</div>
+                        <div>5. Masukkan kedalaman dan ukuran saringan</div>
+                        <div>6. Klik "Tambah Saringan" untuk menambah</div>
+                        <div>7. Atur open hole (opsional) di bagian bawah</div>
+                        <div>8. Klik "Reset Semua" untuk mulai ulang</div>
                     </div>
                 </div>
 
