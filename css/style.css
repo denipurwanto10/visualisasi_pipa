@@ -7,6 +7,7 @@
     --success: #10b981;
     --danger: #ef4444;
     --warning: #d97706;
+    --mat-blue: #3b82f6;
 }
 
 * {
@@ -169,7 +170,7 @@ button {
 
 canvas {
     width: 360px;
-    height: 750px; /* Default lebih tinggi */
+    height: 750px;
     border-radius: 18px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -240,7 +241,6 @@ canvas {
     border-radius: 12px;
 }
 
-/* Item saringan */
 .saringan-item {
     display: flex;
     justify-content: space-between;
@@ -319,7 +319,6 @@ canvas {
     font-size: 11px;
 }
 
-/* Item pipa */
 .pipe-item {
     display: flex;
     justify-content: space-between;
@@ -370,16 +369,6 @@ canvas {
 .pipe-range::before {
     content: "⏬";
     font-size: 10px;
-}
-
-.pipe-diameter {
-    font-size: 11px;
-    color: #64748b;
-    background: #f1f5f9;
-    padding: 2px 8px;
-    border-radius: 12px;
-    display: inline-block;
-    margin-top: 2px;
 }
 
 .pipe-delete {
@@ -444,6 +433,122 @@ canvas {
 .groundlevel-status.inactive {
     background: #e2e8f0;
     color: var(--muted);
+}
+
+/* ====================== */
+/* MAT STYLES */
+/* ====================== */
+
+.mat-info {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    font-size: 13px;
+}
+
+.mat-info.active {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    border-left: 4px solid var(--mat-blue);
+}
+
+.mat-status {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.mat-status.active {
+    background: var(--mat-blue);
+    color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.mat-status.inactive {
+    background: #e2e8f0;
+    color: var(--muted);
+}
+
+.mat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #eff6ff;
+    border-radius: 10px;
+    margin-top: 10px;
+    font-size: 13px;
+    border: 1px solid #bfdbfe;
+    transition: all 0.2s ease;
+}
+
+.mat-item:hover {
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+    transform: translateY(-1px);
+}
+
+.mat-info-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mat-depth {
+    font-weight: 700;
+    color: #1e40af;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mat-depth::before {
+    content: "💧";
+    background: var(--mat-blue);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.mat-description {
+    font-size: 12px;
+    color: #1d4ed8;
+    font-weight: 500;
+}
+
+.mat-delete {
+    cursor: pointer;
+    color: #b91c1c;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border: 1px solid #fca5a5;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mat-delete:hover {
+    background: linear-gradient(135deg, #fecaca, #fca5a5);
+    transform: scale(1.05);
+}
+
+.mat-delete::before {
+    content: "🗑️";
+    font-size: 11px;
 }
 
 /* ====================== */
@@ -562,7 +667,6 @@ canvas {
     font-size: 11px;
 }
 
-/* Pesan kosong */
 .empty-message {
     font-size: 13px;
     color: var(--muted);
@@ -771,10 +875,6 @@ canvas {
     }
 }
 
-/* ====================== */
-/* MOBILE & TOUCH ENHANCEMENT */
-/* ====================== */
-
 @media (max-height: 600px) and (orientation: landscape) {
     .content {
         grid-template-columns: 1fr 1fr;
@@ -789,6 +889,7 @@ canvas {
         max-height: 80px;
     }
 }
+
 .negative-level {
     color: #dc2626 !important;
 }
@@ -796,7 +897,7 @@ canvas {
 .positive-level {
     color: #059669 !important;
 }
-/* Pastikan tooltip tetap berfungsi di mobile */
+
 @media (hover: none) {
     .tooltip {
         display: none;
@@ -807,7 +908,6 @@ canvas {
     }
 }
 
-/* Touch-friendly improvements */
 @media (pointer: coarse) {
     button {
         min-height: 44px;
@@ -819,7 +919,8 @@ canvas {
     
     .pipe-delete,
     .saringan-delete,
-    .openhole-delete {
+    .openhole-delete,
+    .mat-delete {
         min-width: 60px;
         min-height: 36px;
         display: flex;
@@ -830,23 +931,25 @@ canvas {
     
     .pipe-item,
     .saringan-item,
-    .openhole-item {
+    .openhole-item,
+    .mat-item {
         min-height: 60px;
     }
 }
 
-/* Efek hover hanya untuk desktop */
 @media (hover: hover) {
     .pipe-item:hover,
-    .saringan-item:hover {
+    .saringan-item:hover,
+    .openhole-item:hover,
+    .mat-item:hover {
         background: #f8fafc;
         border-color: #cbd5e1;
     }
     
     .pipe-delete:hover,
     .saringan-delete:hover,
-    .openhole-delete:hover {
+    .openhole-delete:hover,
+    .mat-delete:hover {
         background: linear-gradient(135deg, #fecaca, #fca5a5);
     }
 }
-
