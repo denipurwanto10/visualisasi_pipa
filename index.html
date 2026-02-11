@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualisasi Kedalaman Pipa</title>
+    <title>Visualisasi Kedalaman Pipa Sumur Bor</title>
     <link rel="icon" type="image/png" href="img/tubes.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
@@ -13,8 +13,8 @@
         <div class="card">
             <div class="header">
                 <div>
-                    <h1>Visualisasi Pipa</h1>
-                    <p>Visualisasi sederhana pipa dengan saringan dan open hole</p>
+                    <h1>Visualisasi Pipa Sumur Bor</h1>
+                    <p>Visualisasi pipa dengan titik acuan permukaan tanah, saringan, dan open hole</p>
                 </div>
                 <button onclick="downloadPDF()" class="btn-primary">Download PDF</button>
             </div>
@@ -33,8 +33,25 @@
                             <input type="number" id="pipeDiameter" placeholder="Contoh: 6" min="1" max="24" step="0.5">
                             <span class="unit">inch</span>
                         </div>
+                        
+                        <!-- Tombol Tambah Pipa dipindahkan ke sini -->
+                        <button onclick="updateVisualization()" class="btn-primary" style="margin-top: 16px; width: 100%;">
+                            + Tambah Pipa
+                        </button>
 
-                        <label style="margin-top: 20px;">3. Tambah Saringan</label>
+                        <label style="margin-top: 20px;">3. Titik Acuan Permukaan Tanah</label>
+                        <div class="input-group">
+                            <input type="number" id="groundLevelInput" placeholder="Contoh: 2.5" min="-50" max="50" step="0.1">
+                            <span class="unit">m</span>
+                        </div>
+                        <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
+                            Ketinggian titik acuan dari titik nol (permukaan tanah aktual)
+                        </div>
+                        <button onclick="setGroundLevel()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
+                            + Atur Titik Acuan
+                        </button>
+
+                        <label style="margin-top: 20px;">4. Tambah Saringan</label>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
                             <div>
@@ -47,13 +64,13 @@
                             </div>
                         </div>
                         
-                        <div class="controls-grid">
-                            <button onclick="updateVisualization()" class="btn-primary">+ Tambah Pipa</button>
-                            <button onclick="addSaringan()" class="btn-secondary">+ Tambah Saringan</button>
-                        </div>
+                        <!-- Tombol Tambah Saringan saja di sini -->
+                        <button onclick="addSaringan()" class="btn-secondary" style="margin-top: 16px; width: 100%;">
+                            + Tambah Saringan
+                        </button>
 
                         <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-                            <label>4. Open Hole (opsional)</label>
+                            <label>5. Open Hole (opsional)</label>
                             <div class="input-group" style="margin-top: 8px;">
                                 <input type="number" id="openHoleDepth" placeholder="Kedalaman open hole" min="1" max="500">
                                 <span class="unit">m</span>
@@ -78,7 +95,7 @@
                         </div>
                     </div>
 
-                    <div class="openhole-info" id="openHoleInfo">
+                    <div class="openhole-info" id="openHoleInfo" style="margin-top: 16px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <strong>Open Hole</strong>
                             <span id="openHoleStatus" class="openhole-status inactive">Belum diatur</span>
@@ -87,15 +104,26 @@
                             Open hole akan ditampilkan di bagian bawah pipa terakhir
                         </div>
                     </div>
-
+                    
+                    <div class="groundlevel-info" id="groundLevelInfo" style="margin-top: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong>Titik Acuan Permukaan Tanah</strong>
+                            <span id="groundLevelStatus" class="groundlevel-status inactive">Belum diatur</span>
+                        </div>
+                        <div id="groundLevelDetails" style="font-size: 12px; color: #64748b;">
+                            Titik acuan akan ditampilkan sebagai garis putus-putus horizontal
+                        </div>
+                    </div>
+                    
                     <div id="detailInfo" class="detail-box">
                         <strong>Instruksi Penggunaan:</strong>
                         <div>1. Masukkan kedalaman pipa (misal: 45m)</div>
-                        <div>2. Klik "Tambah Pipa" untuk membuat pipa</div>
-                        <div>3. Masukkan kedalaman dan ukuran saringan</div>
-                        <div>4. Klik "Tambah Saringan" untuk menambah</div>
-                        <div>5. Atur open hole (opsional) di bagian bawah</div>
-                        <div>6. Klik "Reset Semua" untuk mulai ulang</div>
+                        <div>2. Atur titik acuan permukaan tanah (jika ada)</div>
+                        <div>3. Klik "Tambah Pipa" untuk membuat pipa</div>
+                        <div>4. Masukkan kedalaman dan ukuran saringan</div>
+                        <div>5. Klik "Tambah Saringan" untuk menambah</div>
+                        <div>6. Atur open hole (opsional) di bagian bawah</div>
+                        <div>7. Klik "Reset Semua" untuk mulai ulang</div>
                     </div>
                 </div>
 
