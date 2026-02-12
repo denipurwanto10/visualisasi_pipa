@@ -35,6 +35,8 @@ const inchToPixel = 6;
 
 let notificationTimeout = null;
 
+let logoDataUrl = null;
+
 function switchPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
@@ -1911,178 +1913,55 @@ canvas.addEventListener("mouseleave", () => {
     hoverDetails.innerHTML = "Arahkan mouse ke komponen pipa";
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    if (!CanvasRenderingContext2D.prototype.roundRect) {
-        CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
-            if (width < 2 * radius) radius = width / 2;
-            if (height < 2 * radius) radius = height / 2;
-            this.beginPath();
-            this.moveTo(x + radius, y);
-            this.arcTo(x + width, y, x + width, y + height, radius);
-            this.arcTo(x + width, y + height, x, y + height, radius);
-            this.arcTo(x, y + height, x, y, radius);
-            this.arcTo(x, y, x + width, y, radius);
-            this.closePath();
-            return this;
-        }
-    }
-    
-    setupBoreholeImageHandlers();
-    
-    drawVisualization();
-    updateGroundLevelInfo();
-    updateMATInfo();
-    updateOpenHoleInfo();
-    updateBoreholeDepthLabels();
-    resetWellData(false);
-    
-    const savedWellData = localStorage.getItem('wellData');
-    if (savedWellData) {
-        try {
-            const data = JSON.parse(savedWellData);
-            if (document.getElementById('companyName')) document.getElementById('companyName').value = data.companyName || '';
-            if (document.getElementById('shallowWellNumber')) document.getElementById('shallowWellNumber').value = data.shallowWellNumber || '';
-            if (document.getElementById('companyAddress')) document.getElementById('companyAddress').value = data.address || '';
-            if (document.getElementById('province')) document.getElementById('province').value = data.province || '';
-            if (document.getElementById('latitude')) document.getElementById('latitude').value = data.latitude || '';
-            if (document.getElementById('longitude')) document.getElementById('longitude').value = data.longitude || '';
-            if (document.getElementById('elevation')) document.getElementById('elevation').value = data.elevation || '';
-            if (document.getElementById('city')) document.getElementById('city').value = data.city || '';
-            if (document.getElementById('district')) document.getElementById('district').value = data.district || '';
-            if (document.getElementById('village')) document.getElementById('village').value = data.village || '';
-            if (document.getElementById('boreholeDate')) document.getElementById('boreholeDate').value = data.boreholeDate || '';
-            if (document.getElementById('wellNumber')) document.getElementById('wellNumber').value = data.wellNumber || '';
-            if (document.getElementById('piezoDistance')) document.getElementById('piezoDistance').value = data.piezoDistance || '';
-            if (document.getElementById('pumpType')) document.getElementById('pumpType').value = data.pumpType || '';
-            if (document.getElementById('pumpPosition')) document.getElementById('pumpPosition').value = data.pumpPosition || '';
-            
-            if (data.boreholeImages) {
-                if (data.boreholeImages.wellPhoto) {
-                    const previewImage = document.getElementById('previewImage');
-                    const photoPreview = document.getElementById('photoPreview');
-                    if (previewImage && photoPreview) {
-                        previewImage.src = data.boreholeImages.wellPhoto;
-                        photoPreview.style.display = 'block';
-                        photoPreview.style.position = 'relative';
-                        
-                        const existingDeleteBtn = photoPreview.querySelector('.image-delete-btn');
-                        if (existingDeleteBtn) existingDeleteBtn.remove();
-                        
-                        const deleteBtn = createDeleteButton();
-                        deleteBtn.onclick = function() {
-                            photoPreview.style.display = 'none';
-                            previewImage.src = '#';
-                            document.getElementById('wellPhoto').value = '';
-                            deleteBtn.remove();
-                        };
-                        photoPreview.appendChild(deleteBtn);
-                    }
-                }
+function loadLogo() {
+    return new Promise((resolve) => {
+        if (window.logoDataUrl) {
+            logoDataUrl = window.logoDataUrl;
+            resolve();
+        } else {
+            const savedLogo = localStorage.getItem('wellLogo');
+            if (savedLogo) {
+                logoDataUrl = savedLogo;
+                resolve();
+            } else {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.src = 'img/logo.png?t=' + Date.now();
                 
-                for (let i = 1; i <= 5; i++) {
-                    const imgKey = `borehole${i}`;
-                    if (data.boreholeImages[imgKey]) {
-                        const previewImage = document.getElementById(`boreholePreviewImage${i}`);
-                        const boreholePreview = document.getElementById(`boreholePreview${i}`);
-                        const previewDepth = document.getElementById(`previewDepth${i}`);
-                        
-                        if (previewImage && boreholePreview) {
-                            previewImage.src = data.boreholeImages[imgKey];
-                            boreholePreview.style.display = 'block';
-                            boreholePreview.style.position = 'relative';
-                            
-                            const existingDeleteBtn = boreholePreview.querySelector('.image-delete-btn');
-                            if (existingDeleteBtn) existingDeleteBtn.remove();
-                            
-                            const deleteBtn = createDeleteButton();
-                            deleteBtn.onclick = function() {
-                                boreholePreview.style.display = 'none';
-                                previewImage.src = '#';
-                                document.getElementById(`boreholeImage${i}`).value = '';
-                                deleteBtn.remove();
-                            };
-                            boreholePreview.appendChild(deleteBtn);
-                            
-                            if (previewDepth) {
-                                let depthValue = '-';
-                                let depthText = '-';
-                                
-                                switch(i) {
-                                    case 1:
-                                        if (pipeSegments.length > 0) {
-                                            const firstPipe = pipeSegments[0];
-                                            depthValue = groundLevelSet ? firstPipe.start - groundLevel : firstPipe.start;
-                                            if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
-                                                else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
-                                            } else {
-                                                depthText = `${formatNumber(depthValue)} m`;
-                                            }
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                    case 2:
-                                        if (matSet) {
-                                            if (matLevel > 0) depthText = `${formatNumber(matLevel)} m di bawah tanah`;
-                                            else if (matLevel < 0) depthText = `${formatNumber(Math.abs(matLevel))} m di atas tanah (artesis)`;
-                                            else depthText = `0 m sama dengan tanah`;
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                    case 3:
-                                        if (pipeSegments.length > 0) {
-                                            const lastPipe = pipeSegments[pipeSegments.length - 1];
-                                            depthValue = groundLevelSet ? lastPipe.end - groundLevel : lastPipe.end;
-                                            if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
-                                                else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
-                                            } else {
-                                                depthText = `${formatNumber(depthValue)} m`;
-                                            }
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                    case 4:
-                                        if (saringanPosisi.length > 0) {
-                                            const firstScreen = saringanPosisi[0];
-                                            depthValue = groundLevelSet ? firstScreen.depth - groundLevel : firstScreen.depth;
-                                            if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
-                                                else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
-                                            } else {
-                                                depthText = `${formatNumber(depthValue)} m`;
-                                            }
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                    case 5:
-                                        if (currentDepth > 0) {
-                                            let baseDepth = openHole ? openHole.endDepth : currentDepth;
-                                            depthValue = groundLevelSet ? baseDepth - groundLevel : baseDepth;
-                                            if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
-                                                else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
-                                            } else {
-                                                depthText = `${formatNumber(depthValue)} m`;
-                                            }
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                }
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    logoDataUrl = canvas.toDataURL('image/png');
+                    window.logoDataUrl = logoDataUrl;
+                    localStorage.setItem('wellLogo', logoDataUrl);
+                    resolve();
+                };
+                
+                img.onerror = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 100;
+                    canvas.height = 100;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#2a5c2a';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('CV. ZONA', canvas.width/2, canvas.height/2 - 10);
+                    ctx.fillText('LIMIT', canvas.width/2, canvas.height/2 + 10);
+                    logoDataUrl = canvas.toDataURL('image/png');
+                    window.logoDataUrl = logoDataUrl;
+                    localStorage.setItem('wellLogo', logoDataUrl);
+                    resolve();
+                };
             }
-        } catch (e) {
-            console.error('Error loading saved well data:', e);
         }
-    }
-});
+    });
+}
 
 function downloadPDF() {
     if (currentDepth === 0 && pipeSegments.length === 0) {
@@ -2094,14 +1973,13 @@ function downloadPDF() {
 
     setTimeout(() => {
         drawVisualization();
-        
         setTimeout(() => {
-            generatePDF(null);
+            generatePDF();
         }, 300);
     }, 100);
 }
 
-function generatePDF(logoBase64) {
+function generatePDF() {
     drawVisualization();
     
     setTimeout(() => {
@@ -2234,12 +2112,38 @@ function generatePDF(logoBase64) {
             const logoX = tableOffsetX;
             const logoY = headerY + 2;
             
-            pdf.setFont('helvetica', 'italic');
-            pdf.setFontSize(7);
-            pdf.setTextColor(150, 150, 150);
-            pdf.text('[LOGO]', logoX + 2, logoY + 7);
+            const logoToUse = logoDataUrl || window.logoDataUrl || localStorage.getItem('wellLogo');
+            
+            if (logoToUse) {
+                try {
+                    pdf.addImage(logoToUse, 'PNG', logoX, logoY, logoW, logoH);
+                } catch (e) {
+                    pdf.setDrawColor(200, 200, 200);
+                    pdf.setLineWidth(0.3);
+                    pdf.rect(logoX, logoY, logoW, logoH);
+                    pdf.setFont('helvetica', 'italic');
+                    pdf.setFontSize(7);
+                    pdf.setTextColor(150, 150, 150);
+                    pdf.text('LOGO', logoX + logoW/2, logoY + logoH/2 + 1, { align: 'center' });
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont('helvetica', 'normal');
+                }
+            } else {
+                pdf.setDrawColor(200, 200, 200);
+                pdf.setLineWidth(0.3);
+                pdf.rect(logoX, logoY, logoW, logoH);
+                pdf.setFont('helvetica', 'italic');
+                pdf.setFontSize(7);
+                pdf.setTextColor(150, 150, 150);
+                pdf.text('LOGO', logoX + logoW/2, logoY + logoH/2 + 1, { align: 'center' });
+                pdf.setTextColor(0, 0, 0);
+                pdf.setFont('helvetica', 'normal');
+            }
+            
             pdf.setTextColor(0, 0, 0);
             pdf.setFont('helvetica', 'normal');
+            pdf.setDrawColor(0, 0, 0);
+            pdf.setLineWidth(0.2);
             
             const infoX = logoX + logoW + 4;
             
@@ -2414,7 +2318,6 @@ function generatePDF(logoBase64) {
                 imgData = canvas.toDataURL('image/png');
             }
         } catch (e) {
-            console.error('Error capturing canvas:', e);
             imgData = '';
         }
         
@@ -2440,9 +2343,7 @@ function generatePDF(logoBase64) {
         if (imgData) {
             try {
                 pdf.addImage(imgData, 'PNG', imgX, imgY, imgW, imgH);
-            } catch (e) {
-                console.error('Error adding image to PDF:', e);
-            }
+            } catch (e) {}
         }
 
         pdf.addPage();
@@ -2514,13 +2415,10 @@ function generatePDF(logoBase64) {
                         const imgY = p2Y + imgPadding + (imgAreaH - imgH) / 2;
                         
                         pdf.addImage(previewImage.src, 'JPEG', imgX, imgY, imgW, imgH);
-                    } catch (e) {
-                        console.error('Error adding well photo:', e);
-                    }
+                    } catch (e) {}
                 };
                 tempImg.src = previewImage.src;
             } catch (e) {
-                console.error('Error processing well photo:', e);
                 pdf.setFont('helvetica', 'italic');
                 pdf.setFontSize(8);
                 pdf.setTextColor(100, 100, 100);
@@ -2608,9 +2506,7 @@ function generatePDF(logoBase64) {
                         
                         imageX += imageWidth + 8;
                         imageCount++;
-                    } catch (e) {
-                        console.error(`Error adding borehole image ${i}:`, e);
-                    }
+                    } catch (e) {}
                 }
             }
         }
@@ -2622,7 +2518,7 @@ function generatePDF(logoBase64) {
     }, 100);
 }
 
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
     if (!CanvasRenderingContext2D.prototype.roundRect) {
         CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
             if (width < 2 * radius) radius = width / 2;
@@ -2638,12 +2534,15 @@ window.addEventListener("load", () => {
         }
     }
     
+    await loadLogo();
+    
     drawVisualization();
     updateGroundLevelInfo();
     updateMATInfo();
     updateOpenHoleInfo();
     updateBoreholeDepthLabels();
     resetWellData(false);
+    setupBoreholeImageHandlers();
     
     const savedWellData = localStorage.getItem('wellData');
     if (savedWellData) {
@@ -2787,9 +2686,7 @@ window.addEventListener("load", () => {
                     }
                 }
             }
-        } catch (e) {
-            console.error('Error loading saved well data:', e);
-        }
+        } catch (e) {}
     }
 });
 
