@@ -10,166 +10,492 @@
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <div class="header">
-                <div>
-                    <h1>Visualisasi Pipa Sumur Bor</h1>
-                    <p>Visualisasi pipa dengan titik acuan permukaan tanah, saringan, dan open hole</p>
-                </div>
-                <button onclick="downloadPDF()" class="btn-primary">Download PDF</button>
+        <!-- Navigation Bar -->
+        <div class="navigation-bar">
+            <div class="nav-links">
+                <button onclick="switchPage('page1')" class="nav-btn active" id="nav-page1">🏠 Visualisasi Pipa</button>
+                <button onclick="switchPage('page2')" class="nav-btn" id="nav-page2">📋 Data Sumur Bor</button>
             </div>
+            <div class="nav-actions">
+                <button onclick="downloadPDF()" class="btn-primary">📥 Download PDF</button>
+                <button onclick="resetAll()" class="btn-danger">🔄 Reset Semua</button>
+            </div>
+        </div>
 
-            <div class="content">
-                <div class="panel">
-                    <div class="input-section">
-                        <label>1. Kedalaman Pipa (meter)</label>
-                        <div class="input-group">
-                            <input type="number" id="depthInput" placeholder="Contoh: 45" min="5" max="500">
-                            <span class="unit">m</span>
-                        </div>
-
-                        <label style="margin-top: 20px;">2. Diameter Pipa</label>
-                        <div class="input-group">
-                            <input type="number" id="pipeDiameter" placeholder="Contoh: 6" min="1" max="24" step="0.5">
-                            <span class="unit">inch</span>
-                        </div>
-                        
-                        <!-- Tombol Tambah Pipa dipindahkan ke sini -->
-                        <button onclick="updateVisualization()" class="btn-primary" style="margin-top: 16px; width: 100%;">
-                            + Tambah Pipa
-                        </button>
-
-                        <label style="margin-top: 20px;">3. Titik Acuan Permukaan Tanah</label>
-                        <div class="input-group">
-                            <input type="number" id="groundLevelInput" placeholder="Contoh: 2.5" min="-50" max="50" step="0.1">
-                            <span class="unit">m</span>
-                        </div>
-                        <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
-                            Ketinggian titik acuan dari titik nol (permukaan tanah aktual)
-                        </div>
-                        <button onclick="setGroundLevel()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
-                            + Atur Titik Acuan
-                        </button>
-
-                        <label style="margin-top: 20px;">4. Muka Air Tanah (MAT)</label>
-                        <div class="input-group">
-                            <input type="number" id="matInput" placeholder="Contoh: -2.0" min="-50" max="50" step="0.1">
-                            <span class="unit">m</span>
-                        </div>
-                        <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
-                            Level muka air tanah relatif terhadap titik acuan
-                        </div>
-                        <button onclick="setMAT()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
-                            + Atur Muka Air Tanah
-                        </button>
-
-                        <label style="margin-top: 20px;">5. Tambah Saringan</label>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
-                            <div>
-                                <label style="font-size: 11px; margin-bottom: 4px;">Kedalaman (m)</label>
-                                <input type="number" id="saringanDepth" placeholder="Contoh: 15" min="1" max="200" style="width: 100%;">
-                            </div>
-                            <div>
-                                <label style="font-size: 11px; margin-bottom: 4px;">Ukuran (m)</label>
-                                <input type="number" id="saringanSize" placeholder="Contoh: 3" min="0.5" max="10" step="0.1" style="width: 100%;">
-                            </div>
-                        </div>
-                        
-                        <!-- Tombol Tambah Saringan saja di sini -->
-                        <button onclick="addSaringan()" class="btn-secondary" style="margin-top: 16px; width: 100%;">
-                            + Tambah Saringan
-                        </button>
-
-                       <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-    <label>6. Open Hole (opsional)</label>
-    <div class="input-group" style="margin-top: 8px;">
-        <!-- PERBAIKI PLACEHOLDER -->
-        <input type="number" id="openHoleDepth" placeholder="Ukuran open hole dari bawah pipa" min="1" max="100">
-        <span class="unit">m</span>
-    </div>
-    <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
-        <!-- PERBAIKI DESKRIPSI -->
-        <strong>Penjelasan:</strong> Open hole adalah bagian terbuka di bawah pipa terakhir.<br>
-        Contoh: 5m = open hole sepanjang 5m di bawah pipa terakhir
-    </div>
-    <button onclick="setOpenHole()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
-        + Set Open Hole
-    </button>
-</div>
-                        
-                        <button onclick="resetAll()" class="btn-danger" style="margin-top: 24px; width: 100%;">Reset Semua</button>
-                    </div>
-
-                    <div class="pipe-list" id="pipeList">
-                        <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">
-                            Belum ada pipa dibuat
-                        </div>
-                    </div>
-                    
-                    <div class="saringan-list" id="saringanList">
-                        <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">
-                            Belum ada saringan ditambahkan
-                        </div>
-                    </div>
-
-                    <div class="openhole-info" id="openHoleInfo" style="margin-top: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong>Open Hole</strong>
-                            <span id="openHoleStatus" class="openhole-status inactive">Belum diatur</span>
-                        </div>
-                        <div id="openHoleDetails" style="font-size: 12px; color: #64748b;">
-                            Open hole akan ditampilkan di bagian bawah pipa terakhir
-                        </div>
-                    </div>
-                    
-                    <div class="groundlevel-info" id="groundLevelInfo" style="margin-top: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong>Titik Acuan Permukaan Tanah</strong>
-                            <span id="groundLevelStatus" class="groundlevel-status inactive">Belum diatur</span>
-                        </div>
-                        <div id="groundLevelDetails" style="font-size: 12px; color: #64748b;">
-                            Titik acuan akan ditampilkan sebagai garis putus-putus horizontal
-                        </div>
-                    </div>
-                    
-                    <div class="mat-info" id="matInfo" style="margin-top: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong>Muka Air Tanah (MAT)</strong>
-                            <span id="matStatus" class="mat-status inactive">Belum diatur</span>
-                        </div>
-                        <div id="matDetails" style="font-size: 12px; color: #64748b;">
-                            Muka air tanah akan ditampilkan sebagai garis biru putus-putus
-                        </div>
-                    </div>
-                    
-                    <div id="detailInfo" class="detail-box">
-                        <strong>Instruksi Penggunaan:</strong>
-                        <div>1. Masukkan kedalaman pipa (misal: 45m)</div>
-                        <div>2. Atur titik acuan permukaan tanah (jika ada)</div>
-                        <div>3. Atur muka air tanah (MAT) jika diketahui</div>
-                        <div>4. Klik "Tambah Pipa" untuk membuat pipa</div>
-                        <div>5. Masukkan kedalaman dan ukuran saringan</div>
-                        <div>6. Klik "Tambah Saringan" untuk menambah</div>
-                        <div>7. Atur open hole (opsional) di bagian bawah</div>
-                        <div>8. Klik "Reset Semua" untuk mulai ulang</div>
+        <!-- PAGE 1: VISUALISASI PIPA -->
+        <div id="page1" class="page active">
+            <div class="card">
+                <div class="header">
+                    <div>
+                        <h1>Visualisasi Pipa Sumur Bor</h1>
+                        <p>Visualisasi pipa dengan titik acuan permukaan tanah, saringan, dan open hole</p>
                     </div>
                 </div>
 
-                <div class="visual-card">
-                    <canvas id="pipeCanvas" width="360" height="600"></canvas>
-                    <div class="hover-info" id="hoverInfo">
-                        <strong>Informasi Komponen</strong>
-                        <div id="hoverDetails">Arahkan mouse ke komponen pipa</div>
+                <div class="content">
+                    <div class="panel">
+                        <div class="input-section">
+                            <label>1. Kedalaman Pipa (meter)</label>
+                            <div class="input-group">
+                                <input type="number" id="depthInput" placeholder="Contoh: 45" min="5" max="500">
+                                <span class="unit">m</span>
+                            </div>
+
+                            <label style="margin-top: 20px;">2. Diameter Pipa</label>
+                            <div class="input-group">
+                                <input type="number" id="pipeDiameter" placeholder="Contoh: 6" min="1" max="24" step="0.5">
+                                <span class="unit">inch</span>
+                            </div>
+                            
+                            <button onclick="updateVisualization()" class="btn-primary" style="margin-top: 16px; width: 100%;">
+                                + Tambah Pipa
+                            </button>
+
+                            <label style="margin-top: 20px;">3. Titik Acuan Permukaan Tanah</label>
+                            <div class="input-group">
+                                <input type="number" id="groundLevelInput" placeholder="Contoh: 2.5" min="-50" max="50" step="0.1">
+                                <span class="unit">m</span>
+                            </div>
+                            <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
+                                Ketinggian titik acuan dari titik nol (permukaan tanah aktual)
+                            </div>
+                            <button onclick="setGroundLevel()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
+                                + Atur Titik Acuan
+                            </button>
+
+                            <label style="margin-top: 20px;">4. Muka Air Tanah (MAT)</label>
+                            <div class="input-group">
+                                <input type="number" id="matInput" placeholder="Contoh: -2.0" min="-50" max="50" step="0.1">
+                                <span class="unit">m</span>
+                            </div>
+                            <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
+                                Level muka air tanah relatif terhadap titik acuan
+                            </div>
+                            <button onclick="setMAT()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
+                                + Atur Muka Air Tanah
+                            </button>
+
+                            <label style="margin-top: 20px;">5. Tambah Saringan</label>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+                                <div>
+                                    <label style="font-size: 11px; margin-bottom: 4px;">Kedalaman (m)</label>
+                                    <input type="number" id="saringanDepth" placeholder="Contoh: 15" min="1" max="200" style="width: 100%;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 11px; margin-bottom: 4px;">Ukuran (m)</label>
+                                    <input type="number" id="saringanSize" placeholder="Contoh: 3" min="0.5" max="10" step="0.1" style="width: 100%;">
+                                </div>
+                            </div>
+                            
+                            <button onclick="addSaringan()" class="btn-secondary" style="margin-top: 16px; width: 100%;">
+                                + Tambah Saringan
+                            </button>
+
+                           <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                                <label>6. Open Hole (opsional)</label>
+                                <div class="input-group" style="margin-top: 8px;">
+                                    <input type="number" id="openHoleDepth" placeholder="Ukuran open hole dari bawah pipa" min="1" max="100">
+                                    <span class="unit">m</span>
+                                </div>
+                                <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
+                                    <strong>Penjelasan:</strong> Open hole adalah bagian terbuka di bawah pipa terakhir.<br>
+                                    Contoh: 5m = open hole sepanjang 5m di bawah pipa terakhir
+                                </div>
+                                <button onclick="setOpenHole()" class="btn-secondary" style="margin-top: 12px; width: 100%;">
+                                    + Set Open Hole
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="pipe-list" id="pipeList">
+                            <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">
+                                Belum ada pipa dibuat
+                            </div>
+                        </div>
+                        
+                        <div class="saringan-list" id="saringanList">
+                            <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">
+                                Belum ada saringan ditambahkan
+                            </div>
+                        </div>
+
+                        <div class="openhole-info" id="openHoleInfo" style="margin-top: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong>Open Hole</strong>
+                                <span id="openHoleStatus" class="openhole-status inactive">Belum diatur</span>
+                            </div>
+                            <div id="openHoleDetails" style="font-size: 12px; color: #64748b;">
+                                Open hole akan ditampilkan di bagian bawah pipa terakhir
+                            </div>
+                        </div>
+                        
+                        <div class="groundlevel-info" id="groundLevelInfo" style="margin-top: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong>Titik Acuan Permukaan Tanah</strong>
+                                <span id="groundLevelStatus" class="groundlevel-status inactive">Belum diatur</span>
+                            </div>
+                            <div id="groundLevelDetails" style="font-size: 12px; color: #64748b;">
+                                Titik acuan akan ditampilkan sebagai garis putus-putus horizontal
+                            </div>
+                        </div>
+                        
+                        <div class="mat-info" id="matInfo" style="margin-top: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong>Muka Air Tanah (MAT)</strong>
+                                <span id="matStatus" class="mat-status inactive">Belum diatur</span>
+                            </div>
+                            <div id="matDetails" style="font-size: 12px; color: #64748b;">
+                                Muka air tanah akan ditampilkan sebagai garis biru putus-putus
+                            </div>
+                        </div>
+                        
+                        <div id="detailInfo" class="detail-box">
+                            <strong>Instruksi Penggunaan:</strong>
+                            <div>1. Masukkan kedalaman pipa (misal: 45m)</div>
+                            <div>2. Atur titik acuan permukaan tanah (jika ada)</div>
+                            <div>3. Atur muka air tanah (MAT) jika diketahui</div>
+                            <div>4. Klik "Tambah Pipa" untuk membuat pipa</div>
+                            <div>5. Masukkan kedalaman dan ukuran saringan</div>
+                            <div>6. Klik "Tambah Saringan" untuk menambah</div>
+                            <div>7. Atur open hole (opsional) di bagian bawah</div>
+                            <div>8. Klik "Reset Semua" untuk mulai ulang</div>
+                        </div>
                     </div>
-                    <div class="tooltip" id="tooltip"></div>
+
+                    <div class="visual-card">
+                        <canvas id="pipeCanvas" width="360" height="600"></canvas>
+                        <div class="hover-info" id="hoverInfo">
+                            <strong>Informasi Komponen</strong>
+                            <div id="hoverDetails">Arahkan mouse ke komponen pipa</div>
+                        </div>
+                        <div class="tooltip" id="tooltip"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="js/script.js"></script>
+        <!-- PAGE 2: DATA SUMUR BOR (TANPA VISUALISASI) -->
+        <div id="page2" class="page">
+            <div class="card">
+                <div class="header">
+                    <div>
+                        <h2 style="font-size: 24px; font-weight: 700;">📋 Data Sumur Bor</h2>
+                        <p style="font-size: 14px; color: var(--muted); margin-top: 4px;">Informasi perusahaan, lokasi, dan teknis sumur bor</p>
+                    </div>
+                    <div class="header-buttons">
+                        <button onclick="saveWellData()" class="btn-primary">💾 Simpan Data</button>
+                        <button onclick="resetWellData()" class="btn-secondary">🔄 Reset</button>
+                    </div>
+                </div>
+
+                <!-- Form Data Sumur Bor -->
+                <div class="well-data-full">
+                    <!-- Section 1: Informasi Perusahaan & Lokasi -->
+                    <div class="form-section">
+                        <h3 class="section-title">🏢 Informasi Perusahaan & Lokasi</h3>
+                        <div class="well-data-grid-full">
+                            <!-- Nama Perusahaan -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>🏢</span> Nama Perusahaan
+                                </label>
+                                <input type="text" id="companyName" placeholder="Contoh: PT. Geotama Teknik" class="well-input">
+                            </div>
+
+                            <!-- Nomor Urut Sumur Bor Dangkal - DITAMBAHKAN DI SINI -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>🔢</span> Nomor Urut Sumur Bor Dangkal
+                                </label>
+                                <input type="text" id="shallowWellNumber" placeholder="Contoh: SWB-001" class="well-input">
+                            </div>
+
+                            <!-- Alamat - Full Width -->
+                            <div class="well-data-item full-width">
+                                <label class="well-label">
+                                    <span>📍</span> Alamat
+                                </label>
+                                <textarea id="companyAddress" rows="3" placeholder="Contoh: Jl. Gejayan No. 10, Yogyakarta" class="well-textarea"></textarea>
+                            </div>
+
+                            <!-- Provinsi -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>🗺️</span> Provinsi
+                                </label>
+                                <select id="province" class="well-input">
+                                    <option value="" disabled selected>Pilih Provinsi</option>
+                                    <option value="Aceh">Aceh</option>
+                                    <option value="Sumatera Utara">Sumatera Utara</option>
+                                    <option value="Sumatera Barat">Sumatera Barat</option>
+                                    <option value="Riau">Riau</option>
+                                    <option value="Kepulauan Riau">Kepulauan Riau</option>
+                                    <option value="Jambi">Jambi</option>
+                                    <option value="Sumatera Selatan">Sumatera Selatan</option>
+                                    <option value="Bangka Belitung">Bangka Belitung</option>
+                                    <option value="Bengkulu">Bengkulu</option>
+                                    <option value="Lampung">Lampung</option>
+                                    <option value="Banten">Banten</option>
+                                    <option value="DKI Jakarta">DKI Jakarta</option>
+                                    <option value="Jawa Barat">Jawa Barat</option>
+                                    <option value="Jawa Tengah">Jawa Tengah</option>
+                                    <option value="DI Yogyakarta">DI Yogyakarta</option>
+                                    <option value="Jawa Timur">Jawa Timur</option>
+                                    <option value="Bali">Bali</option>
+                                    <option value="Nusa Tenggara Barat">Nusa Tenggara Barat</option>
+                                    <option value="Nusa Tenggara Timur">Nusa Tenggara Timur</option>
+                                    <option value="Kalimantan Barat">Kalimantan Barat</option>
+                                    <option value="Kalimantan Tengah">Kalimantan Tengah</option>
+                                    <option value="Kalimantan Selatan">Kalimantan Selatan</option>
+                                    <option value="Kalimantan Timur">Kalimantan Timur</option>
+                                    <option value="Kalimantan Utara">Kalimantan Utara</option>
+                                    <option value="Sulawesi Utara">Sulawesi Utara</option>
+                                    <option value="Sulawesi Tengah">Sulawesi Tengah</option>
+                                    <option value="Sulawesi Selatan">Sulawesi Selatan</option>
+                                    <option value="Sulawesi Tenggara">Sulawesi Tenggara</option>
+                                    <option value="Gorontalo">Gorontalo</option>
+                                    <option value="Sulawesi Barat">Sulawesi Barat</option>
+                                    <option value="Maluku">Maluku</option>
+                                    <option value="Maluku Utara">Maluku Utara</option>
+                                    <option value="Papua">Papua</option>
+                                    <option value="Papua Barat">Papua Barat</option>
+                                    <option value="Papua Tengah">Papua Tengah</option>
+                                    <option value="Papua Pegunungan">Papua Pegunungan</option>
+                                    <option value="Papua Selatan">Papua Selatan</option>
+                                    <option value="Papua Barat Daya">Papua Barat Daya</option>
+                                </select>
+                            </div>
+
+                            <!-- Koordinat & Elevasi dalam 1 baris -->
+                            <div class="coordinate-group">
+                                <div class="well-data-item">
+                                    <label class="well-label">
+                                        <span>🗺️</span> Latitude
+                                    </label>
+                                    <input type="text" id="latitude" placeholder="Contoh: -7.7821" class="well-input">
+                                </div>
+                                <div class="well-data-item">
+                                    <label class="well-label">
+                                        <span>🗺️</span> Longitude
+                                    </label>
+                                    <input type="text" id="longitude" placeholder="Contoh: 110.3671" class="well-input">
+                                </div>
+                                <div class="well-data-item">
+                                    <label class="well-label">
+                                        <span>⛰️</span> Elevasi
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" id="elevation" placeholder="Elevasi" step="0.1" class="well-input">
+                                        <span class="unit">mdpl</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Kabupaten/Kota -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>🏙️</span> Kabupaten/Kota
+                                </label>
+                                <input type="text" id="city" placeholder="Contoh: Bandung" class="well-input">
+                            </div>
+
+                            <!-- Kecamatan -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>🏘️</span> Kecamatan
+                                </label>
+                                <input type="text" id="district" placeholder="Contoh: Cicendo" class="well-input">
+                            </div>
+
+                            <!-- Desa/Kelurahan -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>🏡</span> Desa/Kelurahan
+                                </label>
+                                <input type="text" id="village" placeholder="Contoh: Pasirkaliki" class="well-input">
+                            </div>
+
+                            <!-- Tanggal Pelaksanaan -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>📅</span> Tanggal Pelaksanaan Borehole
+                                </label>
+                                <input type="date" id="boreholeDate" class="well-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Informasi Teknis Sumur -->
+                    <div class="form-section">
+                        <h3 class="section-title">⚙️ Informasi Teknis Sumur</h3>
+                        <div class="well-data-grid-full">
+                            <!-- Nomor Urut Sumur Bor -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>🔢</span> Nomor Urut Sumur Bor
+                                </label>
+                                <input type="text" id="wellNumber" placeholder="Contoh: SUM-001" class="well-input">
+                            </div>
+
+                            <!-- Jarak Piezometer -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>📏</span> Jarak Piezometer ke Sumur
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" id="piezoDistance" placeholder="Jarak" min="0" step="0.1" class="well-input">
+                                    <span class="unit">m</span>
+                                </div>
+                            </div>
+
+                            <!-- Jenis/Kap. Pompa -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>⚙️</span> Jenis / Kapasitas Pompa
+                                </label>
+                                <input type="text" id="pumpType" placeholder="Contoh: Submersible 2 HP" class="well-input">
+                            </div>
+
+                            <!-- Posisi Pompa -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>↕️</span> Posisi Pompa
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" id="pumpPosition" placeholder="Kedalaman" min="0" step="0.1" class="well-input">
+                                    <span class="unit">m</span>
+                                </div>
+                                <span class="input-hint">Kedalaman pompa dari permukaan tanah</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Dokumentasi -->
+                    <div class="form-section">
+                        <h3 class="section-title">📸 Dokumentasi Borehole</h3>
+                        <div class="well-data-grid-full">
+                            <!-- Foto Sumur Bor -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>📸</span> Foto Sumur Bor
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="wellPhoto" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('wellPhoto').click()">
+                                        <span class="upload-icon">📷</span>
+                                        <span class="upload-text">Klik untuk unggah foto</span>
+                                        <span class="upload-hint">JPG, PNG, GIF (max 5MB)</span>
+                                    </div>
+                                </div>
+                                <div id="photoPreview" style="margin-top: 16px; display: none;">
+                                    <img id="previewImage" src="#" alt="Preview" class="photo-preview">
+                                </div>
+                            </div>
+
+                            <!-- Gambar Borehole 1: Ujung Pipa Awal -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>1️⃣</span> Ujung Pipa Awal
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeImage1" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeImage1').click()">
+                                        <span class="upload-icon">🥖</span>
+                                        <span class="upload-text">Ujung Pipa Awal</span>
+                                        <span class="upload-hint">Kedalaman: <span id="depthPipeStart">-</span></span>
+                                    </div>
+                                </div>
+                                <div id="boreholePreview1" style="margin-top: 16px; display: none;">
+                                    <img id="boreholePreviewImage1" src="#" alt="Ujung Pipa Awal" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">📍 Kedalaman: <span id="previewDepth1">-</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Gambar Borehole 2: Muka Air Tanah -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>2️⃣</span> Muka Air Tanah
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeImage2" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeImage2').click()">
+                                        <span class="upload-icon">💧</span>
+                                        <span class="upload-text">Muka Air Tanah</span>
+                                        <span class="upload-hint">Kedalaman: <span id="depthMAT">-</span></span>
+                                    </div>
+                                </div>
+                                <div id="boreholePreview2" style="margin-top: 16px; display: none;">
+                                    <img id="boreholePreviewImage2" src="#" alt="Muka Air Tanah" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">📍 Kedalaman: <span id="previewDepth2">-</span> m</div>
+                                </div>
+                            </div>
+
+                            <!-- Gambar Borehole 3: Batas Pipa -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>3️⃣</span> Batas Pipa
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeImage3" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeImage3').click()">
+                                        <span class="upload-icon">🔵</span>
+                                        <span class="upload-text">Batas Pipa</span>
+                                        <span class="upload-hint">Kedalaman: <span id="depthPipeEnd">-</span></span>
+                                    </div>
+                                </div>
+                                <div id="boreholePreview3" style="margin-top: 16px; display: none;">
+                                    <img id="boreholePreviewImage3" src="#" alt="Batas Pipa" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">📍 Kedalaman: <span id="previewDepth3">-</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Gambar Borehole 4: Screen Perporasi -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>4️⃣</span> Screen Perporasi
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeImage4" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeImage4').click()">
+                                        <span class="upload-icon">🔲</span>
+                                        <span class="upload-text">Screen Perporasi</span>
+                                        <span class="upload-hint">Kedalaman: <span id="depthScreen">-</span></span>
+                                    </div>
+                                </div>
+                                <div id="boreholePreview4" style="margin-top: 16px; display: none;">
+                                    <img id="boreholePreviewImage4" src="#" alt="Screen Perporasi" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">📍 Kedalaman: <span id="previewDepth4">-</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Gambar Borehole 5: Dasar Sumur Bor -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>5️⃣</span> Dasar Sumur Bor
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeImage5" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeImage5').click()">
+                                        <span class="upload-icon">🕳️</span>
+                                        <span class="upload-text">Dasar Sumur Bor</span>
+                                        <span class="upload-hint">Kedalaman: <span id="depthBottom">-</span> m</span>
+                                    </div>
+                                </div>
+                                <div id="boreholePreview5" style="margin-top: 16px; display: none;">
+                                    <img id="boreholePreviewImage5" src="#" alt="Dasar Sumur Bor" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">📍 Kedalaman: <span id="previewDepth5">-</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="js/script.js"></script>
+    </div>
 </body>
 </html>
