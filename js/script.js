@@ -2095,88 +2095,38 @@ function downloadPDF() {
     setTimeout(() => {
         drawVisualization();
         
-        // LOAD LOGO DULU, SETELAH ITU BARU GENERATE PDF
-        loadLogoAndGeneratePDF();
-    }, 300);
+        setTimeout(() => {
+            generatePDF(null); // LANGSUNG NULL, TANPA LOGO
+        }, 300);
+    }, 100);
 }
 
 function loadLogoAndGeneratePDF() {
-    const img = new Image();
+    const logoPath = 'img/logo.png';
     
-    // FORCE CORS BIAR BISA DI file://
-    img.crossOrigin = 'Anonymous';
-    
-    img.onload = function() {
-        console.log('✅ Logo berhasil dimuat!');
-        
-        // Konversi image ke dataURL
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        
-        try {
-            const logoBase64 = canvas.toDataURL('image/png');
-            generatePDF(logoBase64);
-        } catch(e) {
-            console.error('Error konversi logo:', e);
-            generatePDF(null);
-        }
-    };
-    
-    img.onerror = function() {
-        console.error('❌ Logo tidak bisa dimuat dari: img/logo.png');
-        
-        // COBA PATH ALTERNATIF LENGKAP
-        const alternativePaths = [
-            'img/logo.png',
-            './img/logo.png',
-            '/img/logo.png',
-            '../img/logo.png',
-            'img/logo.PNG',
-            'IMG/logo.png',
-            'patgtl/img/logo.png',
-            'C:/Users/ASUS/Desktop/patgtl/img/logo.png'
-        ];
-        
-        let currentPath = 0;
-        
-        function tryNextPath() {
-            if (currentPath >= alternativePaths.length) {
-                console.log('❌ Semua path gagal, generate PDF tanpa logo');
-                generatePDF(null);
-                showNotification('Logo tidak ditemukan, PDF tanpa logo', 'warning', 3000);
-                return;
+    fetch(logoPath)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Logo tidak ditemukan di path: ' + logoPath);
             }
-            
-            const path = alternativePaths[currentPath];
-            currentPath++;
-            console.log('Mencoba path:', path);
-            
-            const testImg = new Image();
-            testImg.crossOrigin = 'Anonymous';
-            
-            testImg.onload = function() {
-                console.log('✅ Logo ditemukan di:', path);
-                const canvas = document.createElement('canvas');
-                canvas.width = testImg.width;
-                canvas.height = testImg.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(testImg, 0, 0);
-                const logoBase64 = canvas.toDataURL('image/png');
-                generatePDF(logoBase64);
-            };
-            
-            testImg.onerror = tryNextPath;
-            testImg.src = path + '?t=' + new Date().getTime();
-        }
-        
-        tryNextPath();
-    };
-    
-    // PASTIKAN PATH INI BENAR!
-    img.src = 'img/logo.png?t=' + new Date().getTime();
+            return response.blob();
+        })
+        .then(blob => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        })
+        .then(logoBase64 => {
+            generatePDF(logoBase64);
+        })
+        .catch(error => {
+            console.error('Error loading logo:', error);
+            // Coba path alternatif
+            tryAlternativeLogoPaths();
+        });
 }
 
 
