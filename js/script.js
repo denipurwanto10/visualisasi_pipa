@@ -2096,39 +2096,10 @@ function downloadPDF() {
         drawVisualization();
         
         setTimeout(() => {
-            generatePDF(null); // LANGSUNG NULL, TANPA LOGO
+            generatePDF(null);
         }, 300);
     }, 100);
 }
-
-function loadLogoAndGeneratePDF() {
-    const logoPath = 'img/logo.png';
-    
-    fetch(logoPath)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Logo tidak ditemukan di path: ' + logoPath);
-            }
-            return response.blob();
-        })
-        .then(blob => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        })
-        .then(logoBase64 => {
-            generatePDF(logoBase64);
-        })
-        .catch(error => {
-            console.error('Error loading logo:', error);
-            // Coba path alternatif
-            tryAlternativeLogoPaths();
-        });
-}
-
 
 function generatePDF(logoBase64) {
     drawVisualization();
@@ -2255,61 +2226,44 @@ function generatePDF(logoBase64) {
         }
 
         function drawHeader() {
-    const headerH = 18;
-    const headerY = 8;
-    
-    const logoW = 18;
-    const logoH = 12;
-    const logoX = tableOffsetX;
-    const logoY = headerY + 2;
-    
-    // TAMPILKAN LOGO JIKA ADA
-    if (logoBase64) {
-        try {
-            pdf.addImage(logoBase64, 'PNG', logoX, logoY, logoW, logoH);
-        } catch (e) {
-            console.error('Error adding logo to PDF:', e);
-            // Fallback: tampilkan teks [LOGO]
+            const headerH = 18;
+            const headerY = 8;
+            
+            const logoW = 18;
+            const logoH = 12;
+            const logoX = tableOffsetX;
+            const logoY = headerY + 2;
+            
             pdf.setFont('helvetica', 'italic');
             pdf.setFontSize(7);
             pdf.setTextColor(150, 150, 150);
             pdf.text('[LOGO]', logoX + 2, logoY + 7);
             pdf.setTextColor(0, 0, 0);
             pdf.setFont('helvetica', 'normal');
+            
+            const infoX = logoX + logoW + 4;
+            
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(10);
+            pdf.setTextColor(46, 125, 50);
+            pdf.text('CV. ZONA LIMIT', infoX, headerY + 5);
+            
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(6.5);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text('Alamat Kantor   :   Jl. P68 Mustafa 35 Bandung - 40124', infoX, headerY + 9);
+            
+            pdf.setFontSize(6);
+            pdf.text('email  :  zonalimit276@gmail.com  Tlp  022-20535449, 08122199346, 082117200035', infoX, headerY + 13);
+            
+            pdf.setDrawColor(101, 67, 33);
+            pdf.setLineWidth(1);
+            pdf.line(tableOffsetX, headerY + headerH, tableOffsetX + tableW, headerY + headerH);
+            
+            pdf.setDrawColor(0, 0, 0);
+            pdf.setTextColor(0, 0, 0);
+            pdf.setLineWidth(0.2);
         }
-    } else {
-        // TIDAK ADA LOGO - tampilkan teks [LOGO] atau nama perusahaan
-        pdf.setFont('helvetica', 'italic');
-        pdf.setFontSize(7);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text('[LOGO]', logoX + 2, logoY + 7);
-        pdf.setTextColor(0, 0, 0);
-        pdf.setFont('helvetica', 'normal');
-    }
-    
-    const infoX = logoX + logoW + 4;
-    
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
-    pdf.setTextColor(46, 125, 50);
-    pdf.text('CV. ZONA LIMIT', infoX, headerY + 5);
-    
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(6.5);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text('Alamat Kantor   :   Jl. P68 Mustafa 35 Bandung - 40124', infoX, headerY + 9);
-    
-    pdf.setFontSize(6);
-    pdf.text('email  :  zonalimit276@gmail.com  Tlp  022-20535449, 08122199346, 082117200035', infoX, headerY + 13);
-    
-    pdf.setDrawColor(101, 67, 33);
-    pdf.setLineWidth(1);
-    pdf.line(tableOffsetX, headerY + headerH, tableOffsetX + tableW, headerY + headerH);
-    
-    pdf.setDrawColor(0, 0, 0);
-    pdf.setTextColor(0, 0, 0);
-    pdf.setLineWidth(0.2);
-}
 
         function drawFooter(pageNumber, reportTitle = '') {
             const footerY = pageH - 10;
