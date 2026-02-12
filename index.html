@@ -8,77 +8,10 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    
-   <script>
-    window.logoDataUrl = null;
-    
-    function preloadLogo() {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        
-        // COBA BEBERAPA PATH YANG MUNGKIN
-        const paths = [
-            'img/logo.png',
-            './img/logo.png',
-            '../img/logo.png',
-            '/img/logo.png'
-        ];
-        
-        let currentPath = 0;
-        
-        function tryPath() {
-            if (currentPath >= paths.length) {
-                console.error('❌ Semua path logo gagal!');
-                makeFallbackLogo();
-                return;
-            }
-            
-            img.src = paths[currentPath] + '?t=' + Date.now();
-            console.log('🔄 Mencoba path:', paths[currentPath]);
-        }
-        
-        img.onload = function() {
-            console.log('✅ Logo preload sukses dari:', img.src);
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            window.logoDataUrl = canvas.toDataURL('image/png');
-            localStorage.setItem('wellLogo', window.logoDataUrl);
-        };
-        
-        img.onerror = function() {
-            console.error('❌ Gagal path:', paths[currentPath]);
-            currentPath++;
-            tryPath();
-        };
-        
-        function makeFallbackLogo() {
-            console.log('⚠️ Membuat logo fallback');
-            const canvas = document.createElement('canvas');
-            canvas.width = 100;
-            canvas.height = 100;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#2a5c2a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('CV. ZONA', canvas.width/2, canvas.height/2 - 10);
-            ctx.fillText('LIMIT', canvas.width/2, canvas.height/2 + 10);
-            window.logoDataUrl = canvas.toDataURL('image/png');
-            localStorage.setItem('wellLogo', window.logoDataUrl);
-        }
-        
-        tryPath();
-    }
-    
-    preloadLogo();
-</script>
 </head>
 <body>
+    <!-- TAMBAHIN INI DI BAWAH BODY, PASTI KELIATAN -->
+<img id="logoPaksa" src="img/logo.png" style="position:fixed; top:10px; left:10px; width:50px; height:auto; border:2px solid red; z-index:9999;">
     <div class="container">
         <!-- Navigation Bar -->
         <div class="navigation-bar">
@@ -162,7 +95,7 @@
                                 + Tambah Saringan
                             </button>
 
-                            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                           <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
                                 <label>6. Open Hole (opsional)</label>
                                 <div class="input-group" style="margin-top: 8px;">
                                     <input type="number" id="openHoleDepth" placeholder="Ukuran open hole dari bawah pipa" min="1" max="100">
@@ -216,7 +149,7 @@
                                 <span id="matStatus" class="mat-status inactive">Belum diatur</span>
                             </div>
                             <div id="matDetails" style="font-size: 12px; color: #64748b;">
-                                Muka air tanah akan ditampilkan sebagai garis biru
+                                Muka air tanah akan ditampilkan sebagai garis biru putus-putus
                             </div>
                         </div>
                         
@@ -245,7 +178,7 @@
             </div>
         </div>
 
-        <!-- PAGE 2: DATA SUMUR BOR -->
+        <!-- PAGE 2: DATA SUMUR BOR (TANPA VISUALISASI) -->
         <div id="page2" class="page">
             <div class="card">
                 <div class="header">
@@ -265,6 +198,7 @@
                     <div class="form-section">
                         <h3 class="section-title">🏢 Informasi Perusahaan & Lokasi</h3>
                         <div class="well-data-grid-full">
+                            <!-- Nama Perusahaan -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>🏢</span> Nama Perusahaan
@@ -272,6 +206,7 @@
                                 <input type="text" id="companyName" placeholder="Contoh: PT. Geotama Teknik" class="well-input">
                             </div>
 
+                            <!-- Nomor Urut Sumur Bor Dangkal - DITAMBAHKAN DI SINI -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>🔢</span> Nomor Urut Sumur Bor Dangkal
@@ -279,6 +214,7 @@
                                 <input type="text" id="shallowWellNumber" placeholder="Contoh: SWB-001" class="well-input">
                             </div>
 
+                            <!-- Alamat - Full Width -->
                             <div class="well-data-item full-width">
                                 <label class="well-label">
                                     <span>📍</span> Alamat
@@ -286,6 +222,7 @@
                                 <textarea id="companyAddress" rows="3" placeholder="Contoh: Jl. Gejayan No. 10, Yogyakarta" class="well-textarea"></textarea>
                             </div>
 
+                            <!-- Provinsi -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>🗺️</span> Provinsi
@@ -333,6 +270,7 @@
                                 </select>
                             </div>
 
+                            <!-- Koordinat & Elevasi dalam 1 baris -->
                             <div class="coordinate-group">
                                 <div class="well-data-item">
                                     <label class="well-label">
@@ -357,6 +295,7 @@
                                 </div>
                             </div>
 
+                            <!-- Kabupaten/Kota -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>🏙️</span> Kabupaten/Kota
@@ -364,6 +303,7 @@
                                 <input type="text" id="city" placeholder="Contoh: Bandung" class="well-input">
                             </div>
 
+                            <!-- Kecamatan -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>🏘️</span> Kecamatan
@@ -371,6 +311,7 @@
                                 <input type="text" id="district" placeholder="Contoh: Cicendo" class="well-input">
                             </div>
 
+                            <!-- Desa/Kelurahan -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>🏡</span> Desa/Kelurahan
@@ -378,6 +319,7 @@
                                 <input type="text" id="village" placeholder="Contoh: Pasirkaliki" class="well-input">
                             </div>
 
+                            <!-- Tanggal Pelaksanaan -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>📅</span> Tanggal Pelaksanaan Borehole
@@ -391,6 +333,7 @@
                     <div class="form-section">
                         <h3 class="section-title">⚙️ Informasi Teknis Sumur</h3>
                         <div class="well-data-grid-full">
+                            <!-- Nomor Urut Sumur Bor -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>🔢</span> Nomor Urut Sumur Bor
@@ -398,6 +341,7 @@
                                 <input type="text" id="wellNumber" placeholder="Contoh: SUM-001" class="well-input">
                             </div>
 
+                            <!-- Jarak Piezometer -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>📏</span> Jarak Piezometer ke Sumur
@@ -408,6 +352,7 @@
                                 </div>
                             </div>
 
+                            <!-- Jenis/Kap. Pompa -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>⚙️</span> Jenis / Kapasitas Pompa
@@ -415,6 +360,7 @@
                                 <input type="text" id="pumpType" placeholder="Contoh: Submersible 2 HP" class="well-input">
                             </div>
 
+                            <!-- Posisi Pompa -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>↕️</span> Posisi Pompa
@@ -432,6 +378,7 @@
                     <div class="form-section">
                         <h3 class="section-title">📸 Dokumentasi Borehole</h3>
                         <div class="well-data-grid-full">
+                            <!-- Foto Sumur Bor -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>📸</span> Foto Sumur Bor
@@ -449,6 +396,7 @@
                                 </div>
                             </div>
 
+                            <!-- Gambar Borehole 1: Ujung Pipa Awal -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>1️⃣</span> Ujung Pipa Awal
@@ -467,6 +415,7 @@
                                 </div>
                             </div>
 
+                            <!-- Gambar Borehole 2: Muka Air Tanah -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>2️⃣</span> Muka Air Tanah
@@ -481,10 +430,11 @@
                                 </div>
                                 <div id="boreholePreview2" style="margin-top: 16px; display: none;">
                                     <img id="boreholePreviewImage2" src="#" alt="Muka Air Tanah" class="photo-preview">
-                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">📍 Kedalaman: <span id="previewDepth2">-</span></div>
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">📍 Kedalaman: <span id="previewDepth2">-</span> m</div>
                                 </div>
                             </div>
 
+                            <!-- Gambar Borehole 3: Batas Pipa -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>3️⃣</span> Batas Pipa
@@ -503,6 +453,7 @@
                                 </div>
                             </div>
 
+                            <!-- Gambar Borehole 4: Screen Perporasi -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>4️⃣</span> Screen Perporasi
@@ -521,6 +472,7 @@
                                 </div>
                             </div>
 
+                            <!-- Gambar Borehole 5: Dasar Sumur Bor -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>5️⃣</span> Dasar Sumur Bor
@@ -530,7 +482,7 @@
                                     <div class="file-upload-label" onclick="document.getElementById('boreholeImage5').click()">
                                         <span class="upload-icon">🕳️</span>
                                         <span class="upload-text">Dasar Sumur Bor</span>
-                                        <span class="upload-hint">Kedalaman: <span id="depthBottom">-</span></span>
+                                        <span class="upload-hint">Kedalaman: <span id="depthBottom">-</span> m</span>
                                     </div>
                                 </div>
                                 <div id="boreholePreview5" style="margin-top: 16px; display: none;">
