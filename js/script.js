@@ -306,15 +306,16 @@ function drawOpenHole(x, y, width, height) {
     ctx.lineWidth = 1;
     ctx.strokeRect(x + 2, y + 2, width - 4, height - 4);
 
+    // MODIFIKASI: Garis ditarik dari bawah open hole
     const lineStartX = x + width;
     const lineEndX = lineStartX + 20;
-    const centerY = y + height / 2;
+    const bottomY = y + height; // Posisi Y di paling bawah open hole
     
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(lineStartX, centerY);
-    ctx.lineTo(lineEndX, centerY);
+    ctx.moveTo(lineStartX, bottomY);
+    ctx.lineTo(lineEndX, bottomY);
     ctx.stroke();
 
     ctx.fillStyle = "#000000";
@@ -323,16 +324,16 @@ function drawOpenHole(x, y, width, height) {
     ctx.textBaseline = "middle";
 
     const labelText = `Open Hole (${formatNumber(openHole.size)} m)`;
-    ctx.fillText(labelText, lineEndX + 4, centerY); 
+    ctx.fillText(labelText, lineEndX + 4, bottomY);
 
     ctx.fillStyle = "#64748b";
     ctx.font = "10px Inter";
     const detailText = `${formatNumber(openHole.startDepth)} - ${formatNumber(openHole.endDepth)} m`;
-    ctx.fillText(detailText, lineEndX + 4, centerY + 15);
+    ctx.fillText(detailText, lineEndX + 4, bottomY + 15);
 
     ctx.fillStyle = "#10b981";
     ctx.beginPath();
-    ctx.arc(lineEndX, centerY, 3, 0, Math.PI * 2);
+    ctx.arc(lineEndX, bottomY, 3, 0, Math.PI * 2);
     ctx.fill();
 
     let info = `Open Hole: ${formatNumber(openHole.startDepth)} m - ${formatNumber(openHole.endDepth)} m (${formatNumber(openHole.size)} m)`;
@@ -364,15 +365,7 @@ function drawGroundLevelLine(groundY) {
 
     ctx.fillStyle = "#92400e";
     ctx.font = "bold 11px Inter";
-    ctx.fillText("Permukaan Tanah", 25, groundY - 8);
-
-    ctx.font = "10px Inter";
-
-    const positionText = groundLevel >= 0 ? 
-        `${formatNumber(groundLevel)} m dari muka tanah` : 
-        `${formatNumber(Math.abs(groundLevel))} m di atas muka tanah`;
-
-    ctx.fillText(positionText, 25, groundY + 15);
+    ctx.fillText("Permukaan Tanah", 5, groundY - 8); // Dipindah dari 25 ke 5
 }
 
 function drawMATLine(matY) {
@@ -396,8 +389,13 @@ function drawMATLine(matY) {
     ctx.font = "10px Inter";
 
     const matDepthFromGround = matLevel;
-    let matText = `MAT: ${formatNumber(matDepthFromGround)} m dari muka tanah`;
-    ctx.fillText(matText, 25, matY + 15);
+    const formattedNumber = formatNumber(matDepthFromGround);
+    
+    // Baris 1: "MAT: X m dari"
+    ctx.fillText(`MAT: ${formattedNumber} m dari`, 5, matY + 15);
+    
+    // Baris 2: "muka tanah"
+    ctx.fillText("muka tanah", 5, matY + 30);
 }
 
 function drawWaterDropIcon(x, matY) {
@@ -415,13 +413,15 @@ function drawWaterDropIcon(x, matY) {
     ctx.fill();
 }
 
-function drawTotalPipaLabel(totalPipeLength, firstPipeStart, lastPipeEnd, totalPipeY) {
+// MODIFIKASI: Fungsi drawTotalPipaLabel yang baru - posisi di bawah pipa
+function drawTotalPipaLabel(totalPipeLength, firstPipeStart, lastPipeEnd, lastPipeX, lastPipeY, lastPipeHeight) {
     const pipeSegmentsRightX = canvas.width / 2;
     const pipeMaxWidth = Math.max(...pipeSegments.map(p => p.widthPx));
     const lastPipeRightX = pipeSegmentsRightX + (pipeMaxWidth / 2);
     
     const lineStartX = lastPipeRightX + 2;
     const lineEndX = lineStartX + 20;
+    const totalPipeY = lastPipeY + lastPipeHeight; // Posisi Y di paling bawah pipa
     
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 1;
@@ -1364,10 +1364,14 @@ function drawVisualization() {
         const firstPipeStart = pipeSegments[0].start;
         const lastPipeEnd = pipeSegments[pipeSegments.length - 1].end;
         
-        const totalPipeCenter = (firstPipeStart + lastPipeEnd) / 2;
-        const totalPipeY = TOP_MARGIN + (totalPipeCenter - minDepthInSystem) * scale;
+        // MODIFIKASI: Ambil pipa terakhir untuk posisi X dan Y
+        const lastPipe = pipeSegments[pipeSegments.length - 1];
+        const lastPipeY = TOP_MARGIN + (lastPipe.start - minDepthInSystem) * scale;
+        const lastPipeHeight = (lastPipe.end - lastPipe.start) * scale;
+        const lastPipeX = canvas.width / 2 - lastPipe.widthPx / 2;
         
-        drawTotalPipaLabel(totalPipeLength, firstPipeStart, lastPipeEnd, totalPipeY);
+        // MODIFIKASI: Panggil fungsi dengan parameter yang sudah dimodifikasi
+        drawTotalPipaLabel(totalPipeLength, firstPipeStart, lastPipeEnd, lastPipeX, lastPipeY, lastPipeHeight);
 
         pipeSegments.forEach((pipe, index) => {
             const segmentHeight = pipe.end - pipe.start;
@@ -2225,76 +2229,13 @@ function generatePDF(logoBase64) {
             pdf.setTextColor(0, 0, 0);
         }
 
-        function drawHeader() {
-            const headerH = 18;
-            const headerY = 8;
-            
-            const logoW = 18;
-            const logoH = 12;
-            const logoX = tableOffsetX;
-            const logoY = headerY + 2;
-            
-            pdf.setFont('helvetica', 'italic');
-            pdf.setFontSize(7);
-            pdf.setTextColor(150, 150, 150);
-            pdf.text('[LOGO]', logoX + 2, logoY + 7);
-            pdf.setTextColor(0, 0, 0);
-            pdf.setFont('helvetica', 'normal');
-            
-            const infoX = logoX + logoW + 4;
-            
-            pdf.setFont('helvetica', 'bold');
-            pdf.setFontSize(10);
-            pdf.setTextColor(46, 125, 50);
-            pdf.text('CV. ZONA LIMIT', infoX, headerY + 5);
-            
-            pdf.setFont('helvetica', 'normal');
-            pdf.setFontSize(6.5);
-            pdf.setTextColor(0, 0, 0);
-            pdf.text('Alamat Kantor   :   Jl. P68 Mustafa 35 Bandung - 40124', infoX, headerY + 9);
-            
-            pdf.setFontSize(6);
-            pdf.text('email  :  zonalimit276@gmail.com  Tlp  022-20535449, 08122199346, 082117200035', infoX, headerY + 13);
-            
-            pdf.setDrawColor(101, 67, 33);
-            pdf.setLineWidth(1);
-            pdf.line(tableOffsetX, headerY + headerH, tableOffsetX + tableW, headerY + headerH);
-            
-            pdf.setDrawColor(0, 0, 0);
-            pdf.setTextColor(0, 0, 0);
-            pdf.setLineWidth(0.2);
-        }
-
-        function drawFooter(pageNumber, reportTitle = '') {
-            const footerY = pageH - 10;
-            
-            pdf.setDrawColor(101, 67, 33);
-            pdf.setLineWidth(1);
-            pdf.line(tableOffsetX, footerY, tableOffsetX + tableW, footerY);
-            
-            pdf.setFont('helvetica', 'normal');
-            pdf.setFontSize(8);
-            pdf.setTextColor(0, 0, 0);
-            
-            if (reportTitle) {
-                pdf.text(reportTitle, tableOffsetX, footerY + 5);
-            }
-            
-            pdf.text('Hal ' + pageNumber, tableOffsetX + tableW, footerY + 5, { align: 'right' });
-            
-            pdf.setDrawColor(0, 0, 0);
-            pdf.setLineWidth(0.2);
-        }
-
-        drawHeader();
-
-        const titleY = 42;
+        // ===== HALAMAN 1 =====
+        let titleY = 20;
+        
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(12);
+        pdf.setFontSize(14);
         pdf.setTextColor(0, 0, 0);
         pdf.text('KONSTRUKSI SUMUR BOR', pageW / 2, titleY, { align: 'center' });
-
-        drawFooter(1, 'Laporan Borehole Camera');
 
         const leftLabelW = 32;
         const colonW = 5;
@@ -2306,6 +2247,7 @@ function generatePDF(logoBase64) {
         const rowH = 7;
         let curY = titleY + 10;
 
+        // Baris 1
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Nama Perusahaan', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
@@ -2315,6 +2257,7 @@ function generatePDF(logoBase64) {
         cellText(companyName, tableOffsetX + leftLabelW + colonW, curY, restW1, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // Baris 2
         const row2H = rowH * 1.5;
         drawCell(tableOffsetX, curY, leftLabelW, row2H);
         cellText('Nomor Urut Sumur Bor Dangkal', tableOffsetX, curY, leftLabelW, row2H, { bold: true, fontSize: 8, paddingX: 2 });
@@ -2324,6 +2267,7 @@ function generatePDF(logoBase64) {
         cellText(shallowWellNumber, tableOffsetX + leftLabelW + colonW, curY, restW1, row2H, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += row2H;
 
+        // Baris 3
         const row3H = rowH * 1.5;
         drawCell(tableOffsetX, curY, leftLabelW, row3H);
         cellText('Alamat', tableOffsetX, curY, leftLabelW, row3H, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
@@ -2333,13 +2277,13 @@ function generatePDF(logoBase64) {
         cellText(companyAddress, tableOffsetX + leftLabelW + colonW, curY, restW1, row3H, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += row3H;
 
+        // Baris 4
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Desa/Kelurahan', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
         cellText(':', tableOffsetX + leftLabelW, curY, colonW, rowH, { bold: true, fontSize: 8, align: 'center', vCenter: true });
         drawCell(tableOffsetX + leftLabelW + colonW, curY, leftValW, rowH);
         cellText(village, tableOffsetX + leftLabelW + colonW, curY, leftValW, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
-
         drawCell(tableOffsetX + leftLabelW + colonW + leftValW, curY, rightLabelW, rowH);
         cellText('X', tableOffsetX + leftLabelW + colonW + leftValW, curY, rightLabelW, rowH, { bold: true, fontSize: 7, paddingX: 1.5, vCenter: true });
         drawCell(tableOffsetX + leftLabelW + colonW + leftValW + rightLabelW, curY, colonW2, rowH);
@@ -2348,6 +2292,7 @@ function generatePDF(logoBase64) {
         cellText(` ${longitude}`, tableOffsetX + leftLabelW + colonW + leftValW + rightLabelW + colonW2, curY, rightValW, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // Baris 5
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Kecamatan', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
@@ -2362,6 +2307,7 @@ function generatePDF(logoBase64) {
         cellText(`${latitude}`, tableOffsetX + leftLabelW + colonW + leftValW + rightLabelW + colonW2, curY, rightValW, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // Baris 6
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Kabupaten/Kota', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
@@ -2376,6 +2322,7 @@ function generatePDF(logoBase64) {
         cellText(elevation + ' mdpl', tableOffsetX + leftLabelW + colonW + leftValW + rightLabelW + colonW2, curY, rightValW, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // Baris 7
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Provinsi', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
@@ -2384,6 +2331,7 @@ function generatePDF(logoBase64) {
         cellText(province, tableOffsetX + leftLabelW + colonW, curY, restW1, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // Sisa halaman untuk gambar
         const remainH = pageH - curY - 20;
         const halfW = tableW / 2;
 
@@ -2404,6 +2352,7 @@ function generatePDF(logoBase64) {
         const ksTextW = pdf.getTextWidth('Gambar Konstruksi Sumur Bor');
         pdf.line(ksLabelX - ksTextW / 2, curY + 5.5, ksLabelX + ksTextW / 2, curY + 5.5);
 
+        // Gambar konstruksi sumur bor
         drawVisualization();
         
         let imgData;
@@ -2445,16 +2394,15 @@ function generatePDF(logoBase64) {
             }
         }
 
+        // ===== HALAMAN 2 =====
         pdf.addPage();
 
-        drawHeader();
-
+        titleY = 20;
+        
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(12);
+        pdf.setFontSize(14);
         pdf.setTextColor(0, 0, 0);
         pdf.text('DATA BOREHOLE CAMERA', pageW / 2, titleY, { align: 'center' });
-
-        drawFooter(2, 'Laporan Borehole Camera');
 
         const p2LabelW = 50;
         const p2ValW = tableW - p2LabelW;
@@ -2473,7 +2421,7 @@ function generatePDF(logoBase64) {
         dataRow('Nomor Urut Sumur Bor Dangkal', shallowWellNumber);
         dataRow('Alamat', companyAddress);
         dataRow('Sumur', wellNumber);
-        dataRow('Koordinat', `X = ${longitude}, dan Y = ${latitude}`);
+        dataRow('Koordinat', `X = ${longitude}, Y = ${latitude}`);
         dataRow('Elevasi', elevation + ' mdpl');
         dataRow('Tanggal pelaksanaan borehole', formattedDate);
         dataRow('Kedalaman Konstruksi Sumur', totalPipeLength > 0 ? `${formatNumber(totalPipeLength)} m` : '-');
@@ -2551,12 +2499,11 @@ function generatePDF(logoBase64) {
         if (hasBoreholeImages) {
             if (p2Y + 60 > pageH - 20) {
                 pdf.addPage();
-                drawHeader();
-                p2Y = titleY + 20;
+                p2Y = 20;
             }
 
             pdf.setFont('helvetica', 'bold');
-            pdf.setFontSize(10);
+            pdf.setFontSize(12);
             pdf.setTextColor(0, 0, 0);
             pdf.text('DOKUMENTASI BOREHOLE', pageW / 2, p2Y, { align: 'center' });
             p2Y += 10;
@@ -2581,9 +2528,8 @@ function generatePDF(logoBase64) {
                         
                         if (imageY + imageHeight > pageH - 20) {
                             pdf.addPage();
-                            drawHeader();
                             imageX = tableOffsetX;
-                            imageY = titleY + 20;
+                            imageY = 20;
                             imageCount = 0;
                         }
                         
