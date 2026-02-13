@@ -49,13 +49,14 @@ function switchPage(pageId) {
 }
 
 function formatNumber(num) {
-    if (num === null || num === undefined) return "0";
-    if (typeof num === 'string') return num;
-    const str = num.toString();
-    if (str.includes('.')) {
-        return str.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.$/, '');
+    if (num === null || num === undefined || num === '-') return '-';
+    if (typeof num === 'string') {
+        if (num === '-') return '-';
+        num = parseFloat(num);
+        if (isNaN(num)) return '-';
     }
-    return str;
+    const formatted = num.toFixed(2);
+    return formatted.replace(/\.00$/, '').replace(/(\.[0-9]*[1-9])0+$/, '$1');
 }
 
 function showNotification(message, type = 'info', duration = 4000) {
@@ -721,11 +722,11 @@ function updateBoreholeDepthLabels() {
             if (groundLevelSet) {
                 depthValue = firstPipe.start - groundLevel;
                 if (depthValue > 0) {
-                    depthPipeStart.textContent = `${formatNumber(depthValue)} m di bawah tanah`;
+                    depthPipeStart.textContent = `${formatNumber(depthValue)} m.bmt`;
                 } else if (depthValue < 0) {
                     depthPipeStart.textContent = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
                 } else {
-                    depthPipeStart.textContent = `0 m sama dengan tanah`;
+                    depthPipeStart.textContent = `0 m.bmt`;
                 }
             } else {
                 depthPipeStart.textContent = `${formatNumber(depthValue)} m`;
@@ -744,11 +745,11 @@ function updateBoreholeDepthLabels() {
             if (groundLevelSet) {
                 depthValue = lastPipe.end - groundLevel;
                 if (depthValue > 0) {
-                    depthPipeEnd.textContent = `${formatNumber(depthValue)} m di bawah tanah`;
+                    depthPipeEnd.textContent = `${formatNumber(depthValue)} m.bmt`;
                 } else if (depthValue < 0) {
                     depthPipeEnd.textContent = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
                 } else {
-                    depthPipeEnd.textContent = `0 m sama dengan tanah`;
+                    depthPipeEnd.textContent = `0 m.bmt`;
                 }
             } else {
                 depthPipeEnd.textContent = `${formatNumber(depthValue)} m`;
@@ -767,11 +768,11 @@ function updateBoreholeDepthLabels() {
             if (groundLevelSet) {
                 depthValue = firstScreen.depth - groundLevel;
                 if (depthValue > 0) {
-                    depthScreen.textContent = `${formatNumber(depthValue)} m di bawah tanah`;
+                    depthScreen.textContent = `${formatNumber(depthValue)} m.bmt`;
                 } else if (depthValue < 0) {
                     depthScreen.textContent = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
                 } else {
-                    depthScreen.textContent = `0 m sama dengan tanah`;
+                    depthScreen.textContent = `0 m.bmt`;
                 }
             } else {
                 depthScreen.textContent = `${formatNumber(depthValue)} m`;
@@ -792,11 +793,11 @@ function updateBoreholeDepthLabels() {
             if (groundLevelSet) {
                 depthValue = depthValue - groundLevel;
                 if (depthValue > 0) {
-                    depthBottom.textContent = `${formatNumber(depthValue)} m di bawah tanah`;
+                    depthBottom.textContent = `${formatNumber(depthValue)} m.bmt`;
                 } else if (depthValue < 0) {
                     depthBottom.textContent = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
                 } else {
-                    depthBottom.textContent = `0 m sama dengan tanah`;
+                    depthBottom.textContent = `0 m.bmt`;
                 }
             } else {
                 depthBottom.textContent = `${formatNumber(depthValue)} m`;
@@ -810,11 +811,11 @@ function updateBoreholeDepthLabels() {
     if (depthMAT) {
         if (matSet) {
             if (matLevel > 0) {
-                depthMAT.textContent = `${formatNumber(matLevel)} m di bawah tanah`;
+                depthMAT.textContent = `${formatNumber(matLevel)} m.bmt`;
             } else if (matLevel < 0) {
                 depthMAT.textContent = `${formatNumber(Math.abs(matLevel))} m di atas tanah (artesis)`;
             } else {
-                depthMAT.textContent = `0 m sama dengan tanah`;
+                depthMAT.textContent = `0 m.bmt`;
             }
         } else {
             depthMAT.textContent = '-';
@@ -1711,9 +1712,9 @@ function handleBoreholeImageUpload(e, index) {
                                 const firstPipe = pipeSegments[0];
                                 depthValue = groundLevelSet ? firstPipe.start - groundLevel : firstPipe.start;
                                 if (groundLevelSet) {
-                                    if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                    if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                     else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                    else depthText = `0 m sama dengan tanah`;
+                                    else depthText = `0 m.bmt`;
                                 } else {
                                     depthText = `${formatNumber(depthValue)} m`;
                                 }
@@ -1722,9 +1723,9 @@ function handleBoreholeImageUpload(e, index) {
                             break;
                         case 2:
                             if (matSet) {
-                                if (matLevel > 0) depthText = `${formatNumber(matLevel)} m di bawah tanah`;
+                                if (matLevel > 0) depthText = `${formatNumber(matLevel)} m.bmt`;
                                 else if (matLevel < 0) depthText = `${formatNumber(Math.abs(matLevel))} m di atas tanah (artesis)`;
-                                else depthText = `0 m sama dengan tanah`;
+                                else depthText = `0 m.bmt`;
                                 depthSpan.textContent = depthText;
                             }
                             break;
@@ -1733,9 +1734,9 @@ function handleBoreholeImageUpload(e, index) {
                                 const lastPipe = pipeSegments[pipeSegments.length - 1];
                                 depthValue = groundLevelSet ? lastPipe.end - groundLevel : lastPipe.end;
                                 if (groundLevelSet) {
-                                    if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                    if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                     else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                    else depthText = `0 m sama dengan tanah`;
+                                    else depthText = `0 m.bmt`;
                                 } else {
                                     depthText = `${formatNumber(depthValue)} m`;
                                 }
@@ -1747,9 +1748,9 @@ function handleBoreholeImageUpload(e, index) {
                                 const firstScreen = saringanPosisi[0];
                                 depthValue = groundLevelSet ? firstScreen.depth - groundLevel : firstScreen.depth;
                                 if (groundLevelSet) {
-                                    if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                    if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                     else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                    else depthText = `0 m sama dengan tanah`;
+                                    else depthText = `0 m.bmt`;
                                 } else {
                                     depthText = `${formatNumber(depthValue)} m`;
                                 }
@@ -1761,9 +1762,9 @@ function handleBoreholeImageUpload(e, index) {
                                 let baseDepth = openHole ? openHole.endDepth : currentDepth;
                                 depthValue = groundLevelSet ? baseDepth - groundLevel : baseDepth;
                                 if (groundLevelSet) {
-                                    if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                    if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                     else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                    else depthText = `0 m sama dengan tanah`;
+                                    else depthText = `0 m.bmt`;
                                 } else {
                                     depthText = `${formatNumber(depthValue)} m`;
                                 }
@@ -2007,9 +2008,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                             const firstPipe = pipeSegments[0];
                                             depthValue = groundLevelSet ? firstPipe.start - groundLevel : firstPipe.start;
                                             if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                                 else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
+                                                else depthText = `0 m.bmt`;
                                             } else {
                                                 depthText = `${formatNumber(depthValue)} m`;
                                             }
@@ -2018,9 +2019,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                         break;
                                     case 2:
                                         if (matSet) {
-                                            if (matLevel > 0) depthText = `${formatNumber(matLevel)} m di bawah tanah`;
+                                            if (matLevel > 0) depthText = `${formatNumber(matLevel)} m.bmt`;
                                             else if (matLevel < 0) depthText = `${formatNumber(Math.abs(matLevel))} m di atas tanah (artesis)`;
-                                            else depthText = `0 m sama dengan tanah`;
+                                            else depthText = `0 m.bmt`;
                                             previewDepth.textContent = depthText;
                                         }
                                         break;
@@ -2029,9 +2030,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                             const lastPipe = pipeSegments[pipeSegments.length - 1];
                                             depthValue = groundLevelSet ? lastPipe.end - groundLevel : lastPipe.end;
                                             if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                                 else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
+                                                else depthText = `0 m.bmt`;
                                             } else {
                                                 depthText = `${formatNumber(depthValue)} m`;
                                             }
@@ -2043,9 +2044,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                             const firstScreen = saringanPosisi[0];
                                             depthValue = groundLevelSet ? firstScreen.depth - groundLevel : firstScreen.depth;
                                             if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                                 else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
+                                                else depthText = `0 m.bmt`;
                                             } else {
                                                 depthText = `${formatNumber(depthValue)} m`;
                                             }
@@ -2057,9 +2058,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                             let baseDepth = openHole ? openHole.endDepth : currentDepth;
                                             depthValue = groundLevelSet ? baseDepth - groundLevel : baseDepth;
                                             if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                                 else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
+                                                else depthText = `0 m.bmt`;
                                             } else {
                                                 depthText = `${formatNumber(depthValue)} m`;
                                             }
@@ -2178,9 +2179,9 @@ window.addEventListener("load", () => {
                                             const firstPipe = pipeSegments[0];
                                             depthValue = groundLevelSet ? firstPipe.start - groundLevel : firstPipe.start;
                                             if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                                 else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
+                                                else depthText = `0 m.bmt`;
                                             } else {
                                                 depthText = `${formatNumber(depthValue)} m`;
                                             }
@@ -2189,9 +2190,9 @@ window.addEventListener("load", () => {
                                         break;
                                     case 2:
                                         if (matSet) {
-                                            if (matLevel > 0) depthText = `${formatNumber(matLevel)} m di bawah tanah`;
+                                            if (matLevel > 0) depthText = `${formatNumber(matLevel)} m.bmt`;
                                             else if (matLevel < 0) depthText = `${formatNumber(Math.abs(matLevel))} m di atas tanah (artesis)`;
-                                            else depthText = `0 m sama dengan tanah`;
+                                            else depthText = `0 m.bmt`;
                                             previewDepth.textContent = depthText;
                                         }
                                         break;
@@ -2200,9 +2201,9 @@ window.addEventListener("load", () => {
                                             const lastPipe = pipeSegments[pipeSegments.length - 1];
                                             depthValue = groundLevelSet ? lastPipe.end - groundLevel : lastPipe.end;
                                             if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                                 else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
+                                                else depthText = `0 m.bmt`;
                                             } else {
                                                 depthText = `${formatNumber(depthValue)} m`;
                                             }
@@ -2214,9 +2215,9 @@ window.addEventListener("load", () => {
                                             const firstScreen = saringanPosisi[0];
                                             depthValue = groundLevelSet ? firstScreen.depth - groundLevel : firstScreen.depth;
                                             if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                                 else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
+                                                else depthText = `0 m.bmt`;
                                             } else {
                                                 depthText = `${formatNumber(depthValue)} m`;
                                             }
@@ -2228,9 +2229,9 @@ window.addEventListener("load", () => {
                                             let baseDepth = openHole ? openHole.endDepth : currentDepth;
                                             depthValue = groundLevelSet ? baseDepth - groundLevel : baseDepth;
                                             if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m di bawah tanah`;
+                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                                 else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m sama dengan tanah`;
+                                                else depthText = `0 m.bmt`;
                                             } else {
                                                 depthText = `${formatNumber(depthValue)} m`;
                                             }
@@ -2326,25 +2327,34 @@ function generatePDF(logoBase64) {
                     if (groundLevelSet) {
                         const relStart = s.depth - groundLevel;
                         const relEnd = sEnd - groundLevel;
-                        return `${formatNumber(relStart)} - ${formatNumber(relEnd)} m (dari muka tanah)`;
+                        return `${formatNumber(relStart)} - ${formatNumber(relEnd)} m.bmt`;
                     }
                     return `${formatNumber(s.depth)} - ${formatNumber(sEnd)} m`;
                 })
-                .join('; ');
+                .join(', ');
         }
 
         let pipeTopInfo = '-';
         if (pipeSegments && pipeSegments.length > 0 && groundLevelSet) {
             const firstPipe = pipeSegments[0];
             const pipeTopRel = firstPipe.start - groundLevel;
-            pipeTopInfo = `${formatNumber(pipeTopRel)} m dari permukaan tanah`;
+            if (pipeTopRel >= 0) {
+                pipeTopInfo = `${formatNumber(pipeTopRel)} m.bmt`;
+            } else {
+                pipeTopInfo = `${formatNumber(Math.abs(pipeTopRel))} m di atas tanah`;
+            }
         }
 
         let kedalamanSumur = '-';
         if (currentDepth > 0) {
-            kedalamanSumur = `${formatNumber(currentDepth)} m`;
+            if (openHole) {
+                kedalamanSumur = `${formatNumber(openHole.endDepth)} m`;
+            } else {
+                kedalamanSumur = `${formatNumber(currentDepth)} m`;
+            }
         }
 
+        // Fungsi untuk menggambar cell tabel
         function drawCell(x, y, w, h, opts = {}) {
             if (opts.fill) {
                 pdf.setFillColor(...opts.fill);
@@ -2355,6 +2365,7 @@ function generatePDF(logoBase64) {
             pdf.rect(x, y, w, h, 'S');
         }
 
+        // Fungsi untuk menulis teks di dalam cell
         function cellText(text, x, y, w, h, opts = {}) {
             const fontSize = opts.fontSize || 8;
             const bold = opts.bold || false;
@@ -2390,6 +2401,76 @@ function generatePDF(logoBase64) {
             pdf.setTextColor(0, 0, 0);
         }
 
+        // Fungsi untuk mendeteksi format gambar dari data URL
+        function getImageFormatFromDataURL(dataURL) {
+            if (!dataURL || dataURL === '#' || dataURL === 'data:,') {
+                return null;
+            }
+            
+            if (dataURL.startsWith('data:image/png')) {
+                return 'PNG';
+            } else if (dataURL.startsWith('data:image/jpeg') || dataURL.startsWith('data:image/jpg')) {
+                return 'JPEG';
+            } else if (dataURL.startsWith('data:image/gif')) {
+                return 'GIF';
+            } else if (dataURL.startsWith('data:image/webp')) {
+                return 'WEBP';
+            } else if (dataURL.startsWith('data:image/bmp')) {
+                return 'BMP';
+            } else if (dataURL.startsWith('data:image/tiff')) {
+                return 'TIFF';
+            }
+            
+            return 'JPEG';
+        }
+
+        // Fungsi untuk menambahkan gambar dengan format yang tepat
+        function addImageToPDF(pdf, imgData, x, y, w, h) {
+            if (!imgData || imgData === '#' || imgData === 'data:,') {
+                return false;
+            }
+            
+            const supportedFormats = ['JPEG', 'PNG', 'WEBP', 'GIF', 'BMP', 'TIFF'];
+            let format = getImageFormatFromDataURL(imgData);
+            
+            if (!supportedFormats.includes(format)) {
+                format = 'JPEG';
+            }
+            
+            try {
+                pdf.addImage(imgData, format, x, y, w, h);
+                return true;
+            } catch (e) {
+                console.error(`Error adding image with format ${format}:`, e);
+                
+                try {
+                    pdf.addImage(imgData, 'PNG', x, y, w, h);
+                    return true;
+                } catch (e2) {
+                    try {
+                        pdf.addImage(imgData, 'JPEG', x, y, w, h);
+                        return true;
+                    } catch (e3) {
+                        console.error('Semua format gagal:', e3);
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // Fungsi untuk mendapatkan nama gambar borehole
+        function getBoreholeImageName(index) {
+            const names = {
+                1: 'Ujung Pipa Awal',
+                2: 'Muka Air Tanah',
+                3: 'Batas Pipa',
+                4: 'Screen Perporasi',
+                5: 'Dasar Sumur Bor'
+            };
+            return names[index] || `Gambar ${index}`;
+        }
+
+        // =========== HALAMAN 1: DATA TEKNIS DAN DUA KOLOM GAMBAR ===========
         let titleY = 20;
         
         pdf.setFont('helvetica', 'bold');
@@ -2407,6 +2488,7 @@ function generatePDF(logoBase64) {
         const rowH = 7;
         let curY = titleY + 10;
 
+        // Baris 1: Nama Perusahaan
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Nama Perusahaan', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
@@ -2416,6 +2498,7 @@ function generatePDF(logoBase64) {
         cellText(companyName, tableOffsetX + leftLabelW + colonW, curY, restW1, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // Baris 2: Nomor Urut Sumur Bor Dangkal
         const row2H = rowH * 1.5;
         drawCell(tableOffsetX, curY, leftLabelW, row2H);
         cellText('Nomor Urut Sumur Bor Dangkal', tableOffsetX, curY, leftLabelW, row2H, { bold: true, fontSize: 8, paddingX: 2 });
@@ -2425,6 +2508,7 @@ function generatePDF(logoBase64) {
         cellText(shallowWellNumber, tableOffsetX + leftLabelW + colonW, curY, restW1, row2H, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += row2H;
 
+        // Baris 3: Alamat
         const row3H = rowH * 1.5;
         drawCell(tableOffsetX, curY, leftLabelW, row3H);
         cellText('Alamat', tableOffsetX, curY, leftLabelW, row3H, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
@@ -2434,6 +2518,7 @@ function generatePDF(logoBase64) {
         cellText(companyAddress, tableOffsetX + leftLabelW + colonW, curY, restW1, row3H, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += row3H;
 
+        // Baris 4: Desa/Kelurahan dan X
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Desa/Kelurahan', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
@@ -2448,6 +2533,7 @@ function generatePDF(logoBase64) {
         cellText(` ${longitude}`, tableOffsetX + leftLabelW + colonW + leftValW + rightLabelW + colonW2, curY, rightValW, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // Baris 5: Kecamatan dan Y
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Kecamatan', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
@@ -2462,6 +2548,7 @@ function generatePDF(logoBase64) {
         cellText(`${latitude}`, tableOffsetX + leftLabelW + colonW + leftValW + rightLabelW + colonW2, curY, rightValW, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // Baris 6: Kabupaten/Kota dan Elevasi
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Kabupaten/Kota', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
@@ -2476,6 +2563,7 @@ function generatePDF(logoBase64) {
         cellText(elevation + ' mdpl', tableOffsetX + leftLabelW + colonW + leftValW + rightLabelW + colonW2, curY, rightValW, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // Baris 7: Provinsi
         drawCell(tableOffsetX, curY, leftLabelW, rowH);
         cellText('Provinsi', tableOffsetX, curY, leftLabelW, rowH, { bold: true, fontSize: 8, paddingX: 2, vCenter: true });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, rowH);
@@ -2484,26 +2572,221 @@ function generatePDF(logoBase64) {
         cellText(province, tableOffsetX + leftLabelW + colonW, curY, restW1, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
+        // ===== DUA KOLOM GAMBAR: BOREHOLE (KIRI - 30%) DAN KONSTRUKSI (KANAN - 70%) =====
         const remainH = pageH - curY - 20;
-        const konstruksiW = tableW * 0.7;
-        const boreholeW = tableW * 0.3;
+        const leftColW = tableW * 0.3; // 30% untuk borehole
+        const rightColW = tableW * 0.7; // 70% untuk konstruksi
 
-        drawCell(tableOffsetX, curY, boreholeW, remainH);
+        // ===== KOLOM KIRI - GAMBAR BOREHOLE (DENGAN 5 FOTO) =====
+        drawCell(tableOffsetX, curY, leftColW, remainH);
+        
+        // Judul
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
-        const bhLabelX = tableOffsetX + boreholeW / 2;
-        pdf.text('Gambar Borehole', bhLabelX, curY + 5, { align: 'center' });
-        const bhTextW = pdf.getTextWidth('Gambar Borehole');
+        pdf.setFontSize(9);
+        const bhLabelX = tableOffsetX + leftColW / 2;
+        pdf.text('GAMBAR BOREHOLE', bhLabelX, curY + 8, { align: 'center' });
+        const bhTextW = pdf.getTextWidth('GAMBAR BOREHOLE');
         pdf.setLineWidth(0.2);
-        pdf.line(bhLabelX - bhTextW / 2, curY + 5.5, bhLabelX + bhTextW / 2, curY + 5.5);
+        pdf.line(bhLabelX - bhTextW / 2, curY + 9, bhLabelX + bhTextW / 2, curY + 9);
 
-        drawCell(tableOffsetX + boreholeW, curY, konstruksiW, remainH);
+        // Daftar gambar borehole (5 gambar)
+        const imageStartY = curY + 15;
+        const imageWidth = leftColW - 12;
+        const imageHeight = 24;
+        const imageSpacing = 3;
+        let imageCurrentY = imageStartY;
+
+        for (let i = 1; i <= 5; i++) {
+            const previewImage = document.getElementById(`boreholePreviewImage${i}`);
+            const depthSpan = document.getElementById(`previewDepth${i}`);
+            
+            // Kotak gambar
+            const imgX = tableOffsetX + 4;
+            const imgY = imageCurrentY;
+            const imgW = imageWidth;
+            const imgH = imageHeight;
+            
+            // Gambar border
+            pdf.setDrawColor(200, 200, 200);
+            pdf.setLineWidth(0.3);
+            pdf.rect(imgX, imgY, imgW, imgH, 'S');
+            
+            // Cek apakah ada gambar
+            if (previewImage && previewImage.src && previewImage.src !== '#' && previewImage.src.startsWith('data:')) {
+                try {
+                    // Hitung proporsi gambar agar fit di kotak
+                    let imgRatio;
+                    if (previewImage.naturalWidth && previewImage.naturalHeight) {
+                        imgRatio = previewImage.naturalWidth / previewImage.naturalHeight;
+                    } else {
+                        imgRatio = 4/3;
+                    }
+                    
+                    let drawW, drawH;
+                    if (imgW / imgH > imgRatio) {
+                        drawH = imgH;
+                        drawW = drawH * imgRatio;
+                    } else {
+                        drawW = imgW;
+                        drawH = drawW / imgRatio;
+                    }
+                    
+                    const drawX = imgX + (imgW - drawW) / 2;
+                    const drawY = imgY + (imgH - drawH) / 2;
+                    
+                    addImageToPDF(pdf, previewImage.src, drawX, drawY, drawW, drawH);
+                } catch (e) {
+                    console.error(`Error adding borehole image ${i}:`, e);
+                    pdf.setFont('helvetica', 'italic');
+                    pdf.setFontSize(7);
+                    pdf.setTextColor(150, 150, 150);
+                    pdf.text('Gambar tidak tersedia', imgX + imgW/2, imgY + imgH/2, { align: 'center' });
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont('helvetica', 'normal');
+                }
+            } else {
+                pdf.setFont('helvetica', 'italic');
+                pdf.setFontSize(7);
+                pdf.setTextColor(150, 150, 150);
+                pdf.text('Tidak ada gambar', imgX + imgW/2, imgY + imgH/2, { align: 'center' });
+                pdf.setTextColor(0, 0, 0);
+                pdf.setFont('helvetica', 'normal');
+            }
+            
+            // Label nama gambar
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(7);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(getBoreholeImageName(i), imgX, imgY + imgH + 2.5);
+            
+            // Kedalaman dalam satuan m.bmt (meter di Bawah Muka Tanah)
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(6);
+            pdf.setTextColor(37, 99, 235);
+            
+            let depthText = '';
+            let depthValue = null;
+            
+            if (groundLevelSet) {
+                switch(i) {
+                    case 1:
+                        if (pipeSegments.length > 0) {
+                            const firstPipe = pipeSegments[0];
+                            depthValue = firstPipe.start - groundLevel;
+                            if (depthValue >= 0) {
+                                depthText = `Kedalaman: ${formatNumber(depthValue)} m.bmt`;
+                            } else {
+                                depthText = `Kedalaman: ${formatNumber(Math.abs(depthValue))} m di atas tanah`;
+                            }
+                        }
+                        break;
+                    case 2:
+                        if (matSet) {
+                            if (matLevel >= 0) {
+                                depthText = `Kedalaman: ${formatNumber(matLevel)} m.bmt`;
+                            } else {
+                                depthText = `Kedalaman: ${formatNumber(Math.abs(matLevel))} m di atas tanah (artesis)`;
+                            }
+                        }
+                        break;
+                    case 3:
+                        if (pipeSegments.length > 0) {
+                            const lastPipe = pipeSegments[pipeSegments.length - 1];
+                            depthValue = lastPipe.end - groundLevel;
+                            if (depthValue >= 0) {
+                                depthText = `Kedalaman: ${formatNumber(depthValue)} m.bmt`;
+                            } else {
+                                depthText = `Kedalaman: ${formatNumber(Math.abs(depthValue))} m di atas tanah`;
+                            }
+                        }
+                        break;
+                    case 4:
+                        if (saringanPosisi.length > 0) {
+                            const firstScreen = saringanPosisi[0];
+                            depthValue = firstScreen.depth - groundLevel;
+                            if (depthValue >= 0) {
+                                depthText = `Kedalaman: ${formatNumber(depthValue)} m.bmt`;
+                            } else {
+                                depthText = `Kedalaman: ${formatNumber(Math.abs(depthValue))} m di atas tanah`;
+                            }
+                        }
+                        break;
+                    case 5:
+                        if (currentDepth > 0) {
+                            const baseDepth = openHole ? openHole.endDepth : currentDepth;
+                            depthValue = baseDepth - groundLevel;
+                            if (depthValue >= 0) {
+                                depthText = `Kedalaman: ${formatNumber(depthValue)} m.bmt`;
+                            } else {
+                                depthText = `Kedalaman: ${formatNumber(Math.abs(depthValue))} m di atas tanah`;
+                            }
+                        }
+                        break;
+                }
+            } else {
+                switch(i) {
+                    case 1:
+                        if (pipeSegments.length > 0) {
+                            const firstPipe = pipeSegments[0];
+                            depthText = `Kedalaman: ${formatNumber(firstPipe.start)} m (absolut)`;
+                        }
+                        break;
+                    case 2:
+                        if (matSet) {
+                            const absoluteMATDepth = groundLevel + matLevel;
+                            depthText = `Kedalaman: ${formatNumber(absoluteMATDepth)} m (absolut)`;
+                        }
+                        break;
+                    case 3:
+                        if (pipeSegments.length > 0) {
+                            const lastPipe = pipeSegments[pipeSegments.length - 1];
+                            depthText = `Kedalaman: ${formatNumber(lastPipe.end)} m (absolut)`;
+                        }
+                        break;
+                    case 4:
+                        if (saringanPosisi.length > 0) {
+                            const firstScreen = saringanPosisi[0];
+                            depthText = `Kedalaman: ${formatNumber(firstScreen.depth)} m (absolut)`;
+                        }
+                        break;
+                    case 5:
+                        if (currentDepth > 0) {
+                            const baseDepth = openHole ? openHole.endDepth : currentDepth;
+                            depthText = `Kedalaman: ${formatNumber(baseDepth)} m (absolut)`;
+                        }
+                        break;
+                }
+            }
+            
+            if (!depthText && depthSpan && depthSpan.textContent && depthSpan.textContent !== '- m' && depthSpan.textContent !== '-') {
+                let spanText = depthSpan.textContent;
+                if (spanText.includes('di bawah tanah')) {
+                    spanText = spanText.replace('di bawah tanah', 'm.bmt').trim();
+                }
+                depthText = `Kedalaman: ${spanText}`;
+            }
+            
+            if (depthText) {
+                pdf.text(depthText, imgX, imgY + imgH + 6);
+            }
+            
+            pdf.setTextColor(0, 0, 0);
+            
+            imageCurrentY += imgH + 9;
+            
+            if (imageCurrentY > curY + remainH - 10) {
+                break;
+            }
+        }
+
+        // ===== KOLOM KANAN - GAMBAR KONSTRUKSI SUMUR BOR =====
+        drawCell(tableOffsetX + leftColW, curY, rightColW, remainH);
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
-        const ksLabelX = tableOffsetX + boreholeW + konstruksiW / 2;
-        pdf.text('Gambar Konstruksi Sumur Bor', ksLabelX, curY + 5, { align: 'center' });
-        const ksTextW = pdf.getTextWidth('Gambar Konstruksi Sumur Bor');
-        pdf.line(ksLabelX - ksTextW / 2, curY + 5.5, ksLabelX + ksTextW / 2, curY + 5.5);
+        pdf.setFontSize(9);
+        const ksLabelX = tableOffsetX + leftColW + rightColW / 2;
+        pdf.text('GAMBAR KONSTRUKSI SUMUR BOR', ksLabelX, curY + 8, { align: 'center' });
+        const ksTextW = pdf.getTextWidth('GAMBAR KONSTRUKSI SUMUR BOR');
+        pdf.line(ksLabelX - ksTextW / 2, curY + 9, ksLabelX + ksTextW / 2, curY + 9);
 
         drawVisualization();
         
@@ -2519,33 +2802,34 @@ function generatePDF(logoBase64) {
             imgData = '';
         }
         
-        const imgPadX = 3;
-        const imgPadT = 8;
-        const imgPadB = 3;
-        const imgAreaW = konstruksiW - imgPadX * 2;
-        const imgAreaH = remainH - imgPadT - imgPadB;
-        const canvasRatio = canvas.width / canvas.height;
-        let imgW, imgH;
-        
-        if (imgAreaW / imgAreaH > canvasRatio) {
-            imgH = imgAreaH;
-            imgW = imgH * canvasRatio;
-        } else {
-            imgW = imgAreaW;
-            imgH = imgW / canvasRatio;
-        }
-        
-        const imgX = tableOffsetX + boreholeW + imgPadX + (imgAreaW - imgW) / 2;
-        const imgY = curY + imgPadT + (imgAreaH - imgH) / 2;
-        
         if (imgData) {
             try {
+                const imgPadX = 5;
+                const imgPadT = 15;
+                const imgPadB = 5;
+                const imgAreaW = rightColW - imgPadX * 2;
+                const imgAreaH = remainH - imgPadT - imgPadB;
+                const canvasRatio = canvas.width / canvas.height;
+                let imgW, imgH;
+                
+                if (imgAreaW / imgAreaH > canvasRatio) {
+                    imgH = imgAreaH;
+                    imgW = imgH * canvasRatio;
+                } else {
+                    imgW = imgAreaW;
+                    imgH = imgW / canvasRatio;
+                }
+                
+                const imgX = tableOffsetX + leftColW + imgPadX + (imgAreaW - imgW) / 2;
+                const imgY = curY + imgPadT + (imgAreaH - imgH) / 2;
+                
                 pdf.addImage(imgData, 'PNG', imgX, imgY, imgW, imgH);
             } catch (e) {
-                console.error('Error adding image to PDF:', e);
+                console.error('Error adding construction image to PDF:', e);
             }
         }
 
+        // =========== HALAMAN 2: DATA BOREHOLE CAMERA ===========
         pdf.addPage();
 
         titleY = 20;
@@ -2561,15 +2845,38 @@ function generatePDF(logoBase64) {
         let p2Y = titleY + 10;
 
         function dataRow(label, value = '-') {
-            drawCell(tableOffsetX, p2Y, p2LabelW, p2RowH);
-            cellText(label, tableOffsetX, p2Y, p2LabelW, p2RowH, { fontSize: 8, paddingX: 2, vCenter: true });
-            drawCell(tableOffsetX + p2LabelW, p2Y, p2ValW, p2RowH);
-            cellText(value, tableOffsetX + p2LabelW, p2Y, p2ValW, p2RowH, { fontSize: 8, paddingX: 2, vCenter: true });
-            p2Y += p2RowH;
+            pdf.setFontSize(8);
+            
+            const maxWidth = p2ValW - 4;
+            const valueLines = pdf.splitTextToSize(String(value), maxWidth);
+            const lineHeight = 3.8;
+            const rowHeight = Math.max(p2RowH, valueLines.length * lineHeight + 2);
+            
+            const currentY = p2Y;
+            
+            drawCell(tableOffsetX, currentY, p2LabelW, rowHeight);
+            cellText(label, tableOffsetX, currentY, p2LabelW, rowHeight, { 
+                fontSize: 8, 
+                paddingX: 2, 
+                vCenter: true 
+            });
+            
+            drawCell(tableOffsetX + p2LabelW, currentY, p2ValW, rowHeight);
+            
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(0, 0, 0);
+            
+            let textY = currentY + 3;
+            valueLines.forEach((line, i) => {
+                pdf.text(line, tableOffsetX + p2LabelW + 2, textY + (i * lineHeight));
+            });
+            
+            p2Y += rowHeight;
         }
 
         dataRow('Nama Perusahaan', companyName);
-        dataRow('Nomor Urut Sumur Bor Dangkal', shallowWellNumber);
+        dataRow('Nomor Urut Sumur Bor', shallowWellNumber);
         dataRow('Alamat', companyAddress);
         dataRow('Sumur', wellNumber);
         dataRow('Koordinat', `X = ${longitude}, Y = ${latitude}`);
@@ -2584,46 +2891,64 @@ function generatePDF(logoBase64) {
         dataRow('Jenis/Kap. Pompa', pumpType);
         dataRow('Posisi Pompa', pumpPosition ? pumpPosition + ' m' : '-');
 
-        const fotoH = pageH - p2Y - 20;
-        drawCell(tableOffsetX, p2Y, p2LabelW, fotoH);
-        cellText('Foto Sumur Bor', tableOffsetX, p2Y, p2LabelW, fotoH, { fontSize: 8, paddingX: 2 });
-        drawCell(tableOffsetX + p2LabelW, p2Y, p2ValW, fotoH);
+        const fotoH = 60;
+        const fotoCellY = p2Y;
 
-        const previewImage = document.getElementById('previewImage');
-        if (previewImage && previewImage.src && previewImage.src !== '#' && previewImage.src.startsWith('data:')) {
+        drawCell(tableOffsetX, fotoCellY, p2LabelW, fotoH);
+        cellText('Foto Sumur Bor', tableOffsetX, fotoCellY, p2LabelW, fotoH, { 
+            fontSize: 8, 
+            paddingX: 2,
+            bold: false,
+            vCenter: false
+        });
+
+        drawCell(tableOffsetX + p2LabelW, fotoCellY, p2ValW, fotoH);
+
+        const wellPhotoPreview = document.getElementById('previewImage');
+        if (wellPhotoPreview && wellPhotoPreview.src && wellPhotoPreview.src !== '#' && wellPhotoPreview.src.startsWith('data:')) {
             try {
-                const imgPadding = 2;
+                const imgPadding = 5;
                 const imgAreaW = p2ValW - (imgPadding * 2);
                 const imgAreaH = fotoH - (imgPadding * 2);
                 
-                const tempImg = new Image();
-                tempImg.onload = function() {
-                    try {
-                        const ratio = tempImg.width / tempImg.height;
-                        let imgW, imgH;
-                        if (imgAreaW / imgAreaH > ratio) {
-                            imgH = imgAreaH;
-                            imgW = imgH * ratio;
-                        } else {
-                            imgW = imgAreaW;
-                            imgH = imgW / ratio;
-                        }
-                        
-                        const imgX = tableOffsetX + p2LabelW + imgPadding + (imgAreaW - imgW) / 2;
-                        const imgY = p2Y + imgPadding + (imgAreaH - imgH) / 2;
-                        
-                        pdf.addImage(previewImage.src, 'JPEG', imgX, imgY, imgW, imgH);
-                    } catch (e) {
-                        console.error('Error adding well photo:', e);
-                    }
-                };
-                tempImg.src = previewImage.src;
+                let imgWidth, imgHeight;
+                if (wellPhotoPreview.naturalWidth && wellPhotoPreview.naturalHeight) {
+                    imgWidth = wellPhotoPreview.naturalWidth;
+                    imgHeight = wellPhotoPreview.naturalHeight;
+                } else if (wellPhotoPreview.width && wellPhotoPreview.height) {
+                    imgWidth = wellPhotoPreview.width;
+                    imgHeight = wellPhotoPreview.height;
+                } else {
+                    imgWidth = 800;
+                    imgHeight = 600;
+                }
+                
+                const ratio = imgWidth / imgHeight;
+                let imgW, imgH;
+                
+                if (imgAreaW / imgAreaH > ratio) {
+                    imgH = imgAreaH;
+                    imgW = imgH * ratio;
+                } else {
+                    imgW = imgAreaW;
+                    imgH = imgW / ratio;
+                }
+                
+                const imgX = tableOffsetX + p2LabelW + imgPadding + (imgAreaW - imgW) / 2;
+                const imgY = fotoCellY + imgPadding + (imgAreaH - imgH) / 2;
+                
+                addImageToPDF(pdf, wellPhotoPreview.src, imgX, imgY, imgW, imgH);
+                
             } catch (e) {
-                console.error('Error processing well photo:', e);
+                console.error('Error adding well photo:', e);
                 pdf.setFont('helvetica', 'italic');
                 pdf.setFontSize(8);
                 pdf.setTextColor(100, 100, 100);
-                pdf.text('Foto tidak tersedia', tableOffsetX + p2LabelW + 5, p2Y + 10);
+                
+                const textX = tableOffsetX + p2LabelW + (p2ValW / 2);
+                const textY = fotoCellY + (fotoH / 2);
+                pdf.text('Foto tidak tersedia', textX, textY, { align: 'center' });
+                
                 pdf.setTextColor(0, 0, 0);
                 pdf.setFont('helvetica', 'normal');
             }
@@ -2631,91 +2956,18 @@ function generatePDF(logoBase64) {
             pdf.setFont('helvetica', 'italic');
             pdf.setFontSize(8);
             pdf.setTextColor(100, 100, 100);
-            pdf.text('Foto tidak tersedia', tableOffsetX + p2LabelW + 5, p2Y + 10);
+            
+            const textX = tableOffsetX + p2LabelW + (p2ValW / 2);
+            const textY = fotoCellY + (fotoH / 2);
+            pdf.text('Foto tidak tersedia', textX, textY, { align: 'center' });
+            
             pdf.setTextColor(0, 0, 0);
             pdf.setFont('helvetica', 'normal');
         }
 
-        p2Y += fotoH + 10;
-
-        let hasBoreholeImages = false;
-        for (let i = 1; i <= 5; i++) {
-            const preview = document.getElementById(`boreholePreviewImage${i}`);
-            if (preview && preview.src && preview.src !== '#' && preview.src.startsWith('data:')) {
-                hasBoreholeImages = true;
-                break;
-            }
-        }
-
-        if (hasBoreholeImages) {
-            if (p2Y + 60 > pageH - 20) {
-                pdf.addPage();
-                p2Y = 20;
-            }
-
-            pdf.setFont('helvetica', 'bold');
-            pdf.setFontSize(12);
-            pdf.setTextColor(0, 0, 0);
-            pdf.text('DOKUMENTASI BOREHOLE', pageW / 2, p2Y, { align: 'center' });
-            p2Y += 10;
-
-            let imageX = tableOffsetX;
-            let imageY = p2Y;
-            const imageWidth = 45;
-            const imageHeight = 35;
-            const imagesPerRow = 2;
-            let imageCount = 0;
-
-            for (let i = 1; i <= 5; i++) {
-                const previewImage = document.getElementById(`boreholePreviewImage${i}`);
-                const depthSpan = document.getElementById(`previewDepth${i}`);
-                
-                if (previewImage && previewImage.src && previewImage.src !== '#' && previewImage.src.startsWith('data:')) {
-                    try {
-                        if (imageCount > 0 && imageCount % imagesPerRow === 0) {
-                            imageX = tableOffsetX;
-                            imageY += imageHeight + 18;
-                        }
-                        
-                        if (imageY + imageHeight > pageH - 20) {
-                            pdf.addPage();
-                            imageX = tableOffsetX;
-                            imageY = 20;
-                            imageCount = 0;
-                        }
-                        
-                        pdf.addImage(previewImage.src, 'JPEG', imageX, imageY, imageWidth, imageHeight);
-                        
-                        let titleText = getBoreholeImageName(i);
-                        
-                        pdf.setFont('helvetica', 'bold');
-                        pdf.setFontSize(7);
-                        pdf.setTextColor(0, 0, 0);
-                        pdf.text(titleText, imageX, imageY + imageHeight + 3);
-                        
-                        pdf.setFont('helvetica', 'normal');
-                        pdf.setFontSize(6);
-                        pdf.setTextColor(37, 99, 235);
-                        
-                        if (depthSpan && depthSpan.textContent !== '- m') {
-                            pdf.text(`Kedalaman: ${depthSpan.textContent}`, imageX, imageY + imageHeight + 8);
-                        }
-                        
-                        pdf.setTextColor(0, 0, 0);
-                        
-                        imageX += imageWidth + 8;
-                        imageCount++;
-                    } catch (e) {
-                        console.error(`Error adding borehole image ${i}:`, e);
-                    }
-                }
-            }
-        }
-
-        setTimeout(() => {
-            pdf.save('laporan_konstruksi_sumur_bor.pdf');
-            showNotification('PDF berhasil diunduh!', 'success', 3000);
-        }, 1000);
+        pdf.save('laporan_konstruksi_sumur_bor.pdf');
+        showNotification('PDF berhasil diunduh!', 'success', 3000);
+        
     }, 100);
 }
 
