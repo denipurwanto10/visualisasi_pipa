@@ -2334,20 +2334,20 @@ function generatePDF(logoBase64) {
         }
 
         let screenInfo = '-';
-        if (saringanPosisi && saringanPosisi.length > 0) {
-            screenInfo = saringanPosisi
-                .sort((a, b) => a.depth - b.depth)
-                .map(s => {
-                    const sEnd = s.depth + s.size;
-                    if (groundLevelSet) {
-                        const relStart = s.depth - groundLevel;
-                        const relEnd = sEnd - groundLevel;
-                        return `${formatNumber(relStart)} - ${formatNumber(relEnd)} m.bmt`;
-                    }
-                    return `${formatNumber(s.depth)} - ${formatNumber(sEnd)} m`;
-                })
-                .join(', ');
-        }
+if (saringanPosisi && saringanPosisi.length > 0) {
+    screenInfo = saringanPosisi
+        .sort((a, b) => a.depth - b.depth)
+        .map(s => {
+            const sEnd = s.depth + s.size;
+            if (groundLevelSet) {
+                const relStart = s.depth - groundLevel;
+                const relEnd = sEnd - groundLevel;
+                return `${formatNumber(relStart)} - ${formatNumber(relEnd)} m.bmt`; // DARI m ke m.bmt
+            }
+            return `${formatNumber(s.depth)} - ${formatNumber(sEnd)} m`;
+        })
+        .join(', ');
+}
 
         let pipeTopInfo = '-';
         if (pipeSegments && pipeSegments.length > 0 && groundLevelSet) {
