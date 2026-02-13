@@ -1707,10 +1707,13 @@ function handleBoreholeImageUpload(e, index) {
                     let depthText = '-';
                     
                     switch(index) {
-                        case 1:
+                        case 1: // Ujung Pipa Awal - cari pipa dengan start terkecil
                             if (pipeSegments.length > 0) {
-                                const firstPipe = pipeSegments[0];
-                                depthValue = groundLevelSet ? firstPipe.start - groundLevel : firstPipe.start;
+                                // Cari segmen pipa dengan start depth terkecil (paling atas)
+                                const topPipe = pipeSegments.reduce((min, p) => 
+                                    p.start < min.start ? p : min, pipeSegments[0]);
+                                depthValue = groundLevelSet ? topPipe.start - groundLevel : topPipe.start;
+                                
                                 if (groundLevelSet) {
                                     if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                     else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
@@ -1721,7 +1724,8 @@ function handleBoreholeImageUpload(e, index) {
                                 depthSpan.textContent = depthText;
                             }
                             break;
-                        case 2:
+                            
+                        case 2: // Muka Air Tanah
                             if (matSet) {
                                 if (matLevel > 0) depthText = `${formatNumber(matLevel)} m.bmt`;
                                 else if (matLevel < 0) depthText = `${formatNumber(Math.abs(matLevel))} m di atas tanah (artesis)`;
@@ -1729,10 +1733,14 @@ function handleBoreholeImageUpload(e, index) {
                                 depthSpan.textContent = depthText;
                             }
                             break;
-                        case 3:
+                            
+                        case 3: // Batas Pipa - cari pipa dengan end terbesar
                             if (pipeSegments.length > 0) {
-                                const lastPipe = pipeSegments[pipeSegments.length - 1];
-                                depthValue = groundLevelSet ? lastPipe.end - groundLevel : lastPipe.end;
+                                // Cari segmen pipa dengan end depth terbesar (paling bawah)
+                                const bottomPipe = pipeSegments.reduce((max, p) => 
+                                    p.end > max.end ? p : max, pipeSegments[0]);
+                                depthValue = groundLevelSet ? bottomPipe.end - groundLevel : bottomPipe.end;
+                                
                                 if (groundLevelSet) {
                                     if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                     else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
@@ -1743,10 +1751,15 @@ function handleBoreholeImageUpload(e, index) {
                                 depthSpan.textContent = depthText;
                             }
                             break;
-                        case 4:
+                            
+                        case 4: // SCREEN PERPORASI - CARI SARINGAN PALING ATAS
                             if (saringanPosisi.length > 0) {
-                                const firstScreen = saringanPosisi[0];
-                                depthValue = groundLevelSet ? firstScreen.depth - groundLevel : firstScreen.depth;
+                                // CARI SARINGAN DENGAN KEDALAMAN TERKECIL (PALING ATAS)
+                                const topScreen = saringanPosisi.reduce((min, s) => 
+                                    s.depth < min.depth ? s : min, saringanPosisi[0]);
+                                
+                                depthValue = groundLevelSet ? topScreen.depth - groundLevel : topScreen.depth;
+                                
                                 if (groundLevelSet) {
                                     if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                     else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
@@ -1757,10 +1770,12 @@ function handleBoreholeImageUpload(e, index) {
                                 depthSpan.textContent = depthText;
                             }
                             break;
-                        case 5:
+                            
+                        case 5: // Dasar Sumur Bor
                             if (currentDepth > 0) {
                                 let baseDepth = openHole ? openHole.endDepth : currentDepth;
                                 depthValue = groundLevelSet ? baseDepth - groundLevel : baseDepth;
+                                
                                 if (groundLevelSet) {
                                     if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
                                     else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
