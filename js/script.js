@@ -2361,13 +2361,13 @@ function generatePDF(logoBase64) {
         }
 
         let kedalamanSumur = '-';
-        if (currentDepth > 0) {
-            if (openHole) {
-                kedalamanSumur = `${formatNumber(openHole.endDepth)} m`;
-            } else {
-                kedalamanSumur = `${formatNumber(currentDepth)} m`;
-            }
-        }
+if (currentDepth > 0) {
+    if (openHole) {
+        kedalamanSumur = `${formatNumber(openHole.endDepth)} m.bmt`;
+    } else {
+        kedalamanSumur = `${formatNumber(currentDepth)} m.bmt`;
+    }
+}
 
         // Fungsi untuk menggambar cell tabel
         function drawCell(x, y, w, h, opts = {}) {
@@ -2897,7 +2897,7 @@ function generatePDF(logoBase64) {
         dataRow('Koordinat', `X = ${longitude}, Y = ${latitude}`);
         dataRow('Elevasi', elevation + ' mdpl');
         dataRow('Tanggal pelaksanaan borehole', formattedDate);
-        dataRow('Kedalaman Konstruksi Sumur', totalPipeLength > 0 ? `${formatNumber(totalPipeLength)} m` : '-');
+        dataRow('Kedalaman Konstruksi Sumur', totalPipeLength > 0 ? `${formatNumber(totalPipeLength)} m.bmt` : '-');
         dataRow('Kedalaman Sumur (sudah terendapkan lumpur/kotoran)', kedalamanSumur);
         dataRow('Konstruksi Pipa (diameter)', pipeInfo ? pipeInfo + ' Inchi' : '-');
         dataRow('Screen', screenInfo);
