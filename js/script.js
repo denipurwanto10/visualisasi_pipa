@@ -1118,47 +1118,72 @@ function addSaringan() {
     const depth = parseFloat(saringanDepth.value);
     const size = parseFloat(saringanSize.value);
 
-    if (!depth || depth < 0 || depth > currentDepth) {
-        showNotification(`Masukkan kedalaman yang valid (0-${formatNumber(currentDepth)} m dalam sistem)`, 'error', 3000);
+    if (isNaN(depth) || depth < 0) {
+        showNotification(`Masukkan kedalaman yang valid (0-${formatNumber(currentDepth)} m)`, 'error', 3000);
         return;
     }
 
-    if (!size || size <= 0 || size > currentDepth) {
-        showNotification(`Masukkan ukuran saringan yang valid (0.1-${formatNumber(currentDepth)} m)`, 'error', 3000);
+    if (isNaN(size) || size <= 0) {
+        showNotification(`Masukkan ukuran saringan yang valid (>0 m)`, 'error', 3000);
         return;
     }
 
     const saringanStart = depth;
     const saringanEnd = depth + size;
 
-    const pipe = pipeSegments.find(p => saringanStart >= p.start && saringanEnd <= p.end);
-
-    if (!pipe) {
-        showNotification(`Saringan berada di luar pipa! Pastikan saringan (${formatNumber(saringanStart)} m - ${formatNumber(saringanEnd)} m) berada dalam pipa`, 'error', 3000);
+    // PERBAIKAN 1: Validasi batas bawah pipa (paling penting!)
+    if (saringanStart < 0) {
+        showNotification(`Saringan tidak boleh dimulai dari kedalaman negatif`, 'error', 3000);
         return;
     }
 
+    // PERBAIKAN 2: CEK PALING PENTING - Saringan harus berakhir di dalam pipa atau tepat di batas pipa
+    // currentDepth adalah ujung bawah pipa terakhir (17.5 m)
+    if (saringanEnd > currentDepth) {
+        showNotification(`Saringan melebihi batas bawah pipa. Batas pipa: ${formatNumber(currentDepth)} m`, 'error', 4000);
+        return;
+    }
+
+    // PERBAIKAN 3: Cek tumpang tindih dengan saringan lain
     for (const existingSaringan of saringanPosisi) {
         const existingStart = existingSaringan.depth;
         const existingEnd = existingSaringan.depth + existingSaringan.size;
 
-        if ((saringanStart >= existingStart && saringanStart <= existingEnd) ||
-            (saringanEnd >= existingStart && saringanEnd <= existingEnd) ||
-            (saringanStart <= existingStart && saringanEnd >= existingEnd)) {
-            showNotification(`Saringan tumpang tindih dengan saringan di kedalaman ${formatNumber(existingSaringan.depth)} m`, 'error', 4000);
+        // Deteksi tumpang tindih (overlap)
+        if (saringanEnd > existingStart && saringanStart < existingEnd) {
+            showNotification(`Saringan tumpang tindih dengan saringan di ${formatNumber(existingStart)}-${formatNumber(existingEnd)} m`, 'error', 4000);
             return;
         }
     }
 
+    // PERBAIKAN 4: Validasi open hole - saringan boleh SENTUH open hole
     if (openHole) {
-        const safetyMargin = 2;
-        if (saringanEnd > (openHole.startDepth - safetyMargin)) {
-            showNotification(`Saringan terlalu dekat dengan open hole. Open hole mulai dari ${formatNumber(openHole.startDepth)} m`, 'error', 4000);
+        // Saringan boleh tepat di atas open hole (saringanEnd == openHole.startDepth diperbolehkan)
+        // Contoh: saringan 16.7-16.9 dengan open hole 17.5-19.6 itu VALID (16.9 < 17.5)
+        if (saringanEnd > openHole.startDepth) {
+            showNotification(`Saringan tidak boleh masuk ke area open hole. Open hole mulai dari ${formatNumber(openHole.startDepth)} m`, 'error', 4000);
             return;
+        }
+        
+        // Notifikasi jika saringan sangat dekat (tapi tidak wajib)
+        const distanceToOpenHole = openHole.startDepth - saringanEnd;
+        if (distanceToOpenHole > 0 && distanceToOpenHole < 0.1) {
+            showNotification(`Saringan ditempatkan ${formatNumber(distanceToOpenHole)} m di atas open hole`, 'info', 3000);
         }
     }
 
+    // PERBAIKAN 5: HAPUS pengecekan pipeSegments.find yang terlalu ketat!
+    // Kita tidak perlu cek apakah saringan dalam satu segmen pipa karena:
+    // 1. currentDepth sudah memastikan saringan dalam batas total pipa
+    // 2. Pengecekan segmen menyebabkan error untuk saringan di 16.7 m
+
+    // Tambahkan saringan
     saringanPosisi.push({ depth, size });
+    
+    // Urutkan saringan berdasarkan kedalaman untuk tampilan yang rapi
+    saringanPosisi.sort((a, b) => a.depth - b.depth);
+    
+    // Reset input
     saringanDepth.value = '';
     saringanSize.value = '3';
 
@@ -1166,13 +1191,24 @@ function addSaringan() {
     drawVisualization();
     updateBoreholeDepthLabels();
 
-    let message = `Saringan berhasil ditambahkan: ${formatNumber(saringanStart)} m - ${formatNumber(saringanEnd)} m (ukuran: ${formatNumber(size)} m)`;
+    let message = `✅ Saringan berhasil ditambahkan: ${formatNumber(saringanStart)}-${formatNumber(saringanEnd)} m (ukuran: ${formatNumber(size)} m)`;
+    
     if (groundLevelSet) {
         const relativeStart = depth - groundLevel;
         const relativeEnd = saringanEnd - groundLevel;
-        message += `\n(Posisi relatif terhadap tanah: ${formatNumber(relativeStart)} m s/d ${formatNumber(relativeEnd)} m)`;
+        message += `\n📏 Posisi relatif: ${formatNumber(relativeStart)}-${formatNumber(relativeEnd)} m dari tanah`;
     }
-    showNotification(message, 'success', 4000);
+    
+    if (openHole) {
+        const distanceToOpenHole = openHole.startDepth - saringanEnd;
+        if (distanceToOpenHole > 0) {
+            message += `\n📐 Jarak ke open hole: ${formatNumber(distanceToOpenHole)} m`;
+        } else if (distanceToOpenHole === 0) {
+            message += `\n🔗 Tepat di atas open hole`;
+        }
+    }
+    
+    showNotification(message, 'success', 5000);
 }
 
 function hapusSaringan(index) {
@@ -2513,10 +2549,10 @@ if (currentDepth > 0) {
         cellText(companyName, tableOffsetX + leftLabelW + colonW, curY, restW1, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
-        // Baris 2: Nomor Urut Sumur Bor 
+        // Baris 2: Nomor Urut Sumur Bor Dangkal
         const row2H = rowH * 1.5;
         drawCell(tableOffsetX, curY, leftLabelW, row2H);
-        cellText('Nomor Urut Sumur Bor', tableOffsetX, curY, leftLabelW, row2H, { bold: true, fontSize: 8, paddingX: 2 });
+        cellText('Nomor Urut Sumur Bor Dangkal', tableOffsetX, curY, leftLabelW, row2H, { bold: true, fontSize: 8, paddingX: 2 });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, row2H);
         cellText(':', tableOffsetX + leftLabelW, curY, colonW, row2H, { bold: true, fontSize: 8, align: 'center', vCenter: true });
         drawCell(tableOffsetX + leftLabelW + colonW, curY, restW1, row2H);
