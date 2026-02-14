@@ -2549,10 +2549,10 @@ if (currentDepth > 0) {
         cellText(companyName, tableOffsetX + leftLabelW + colonW, curY, restW1, rowH, { fontSize: 8, paddingX: 2, vCenter: true });
         curY += rowH;
 
-        // Baris 2: Nomor Urut Sumur Bor Dangkal
+        // Baris 2: Nomor Urut Sumur Bor 
         const row2H = rowH * 1.5;
         drawCell(tableOffsetX, curY, leftLabelW, row2H);
-        cellText('Nomor Urut Sumur Bor Dangkal', tableOffsetX, curY, leftLabelW, row2H, { bold: true, fontSize: 8, paddingX: 2 });
+        cellText('Nomor Urut Sumur Bor', tableOffsetX, curY, leftLabelW, row2H, { bold: true, fontSize: 8, paddingX: 2 });
         drawCell(tableOffsetX + leftLabelW, curY, colonW, row2H);
         cellText(':', tableOffsetX + leftLabelW, curY, colonW, row2H, { bold: true, fontSize: 8, align: 'center', vCenter: true });
         drawCell(tableOffsetX + leftLabelW + colonW, curY, restW1, row2H);
