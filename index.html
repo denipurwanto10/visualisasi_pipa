@@ -15,6 +15,7 @@
             <div class="nav-links">
                 <button onclick="switchPage('page1')" class="nav-btn active" id="nav-page1">🏠 Visualisasi Pipa</button>
                 <button onclick="switchPage('page2')" class="nav-btn" id="nav-page2">📋 Data Sumur Bor</button>
+                <button onclick="switchPage('page3')" class="nav-btn" id="nav-page3">📹 Dokumentasi Kegiatan</button>
             </div>
             <div class="nav-actions">
                 <button onclick="downloadPDF()" class="btn-primary">📥 Download PDF</button>
@@ -175,17 +176,13 @@
             </div>
         </div>
 
-        <!-- PAGE 2: DATA SUMUR BOR (TANPA VISUALISASI) -->
+        <!-- PAGE 2: DATA SUMUR BOR -->
         <div id="page2" class="page">
             <div class="card">
                 <div class="header">
                     <div>
                         <h2 style="font-size: 24px; font-weight: 700;">📋 Data Sumur Bor</h2>
                         <p style="font-size: 14px; color: var(--muted); margin-top: 4px;">Informasi perusahaan, lokasi, dan teknis sumur bor</p>
-                    </div>
-                    <div class="header-buttons">
-                        <button onclick="saveWellData()" class="btn-primary">💾 Simpan Data</button>
-                        <button onclick="resetWellData()" class="btn-secondary">🔄 Reset</button>
                     </div>
                 </div>
 
@@ -203,7 +200,7 @@
                                 <input type="text" id="companyName" placeholder="Contoh: PT. Geotama Teknik" class="well-input">
                             </div>
 
-                            <!-- Nomor Urut Sumur Bor Dangkal - DITAMBAHKAN DI SINI -->
+                            <!-- Nomor Urut Sumur Bor Dangkal -->
                             <div class="well-data-item">
                                 <label class="well-label">
                                     <span>🔢</span> Nomor Urut Sumur Bor Dangkal
@@ -489,6 +486,156 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- BUTTON DIPINDAHKAN KE BAWAH -->
+                <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                    <button onclick="resetWellData()" class="btn-secondary" style="padding: 12px 24px;">🔄 Reset</button>
+                    <button onclick="saveWellData()" class="btn-primary" style="padding: 12px 24px;">💾 Simpan Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 3: DOKUMENTASI KEGIATAN BOREHOLE -->
+        <div id="page3" class="page">
+            <div class="card">
+                <div class="header">
+                    <div>
+                        <h2 style="font-size: 24px; font-weight: 700;">📹 Dokumentasi Kegiatan Borehole</h2>
+                        <p style="font-size: 14px; color: var(--muted); margin-top: 4px;">Dokumentasi kegiatan borehole camera di lapangan</p>
+                    </div>
+                </div>
+
+                <!-- Form Dokumentasi Kegiatan -->
+                <div class="well-data-full">
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <span aria-hidden="true">📹</span> 
+                            DOKUMENTASI KEGIATAN BOREHOLE CAMERA
+                        </h3>
+                        
+                        <div class="well-data-grid-full">
+                            <!-- Foto 1: Papan Nama Lokasi Penyelidikan -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>1️⃣</span> Papan Nama Lokasi Penyelidikan
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeDoc1" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeDoc1').click()">
+                                        <span class="upload-icon">📋</span>
+                                        <span class="upload-text">Upload Foto Papan Nama</span>
+                                        <span class="upload-hint">Foto papan nama lokasi</span>
+                                    </div>
+                                </div>
+                                <div id="boreholeDocPreview1" style="margin-top: 16px; display: none; position: relative;">
+                                    <img id="boreholeDocImage1" src="#" alt="Papan Nama" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">✅ Foto 1: Papan Nama Lokasi Penyelidikan</div>
+                                </div>
+                            </div>
+
+                            <!-- Foto 2: Kenampakan Sumur Bor Produksi -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>2️⃣</span> Kenampakan Sumur Bor Produksi
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeDoc2" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeDoc2').click()">
+                                        <span class="upload-icon">🕳️</span>
+                                        <span class="upload-text">Upload Foto Sumur Bor</span>
+                                        <span class="upload-hint">Kenampakan sumur bor produksi</span>
+                                    </div>
+                                </div>
+                                <div id="boreholeDocPreview2" style="margin-top: 16px; display: none; position: relative;">
+                                    <img id="boreholeDocImage2" src="#" alt="Sumur Bor Produksi" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">✅ Foto 2: Kenampakan Sumur Bor Produksi</div>
+                                </div>
+                            </div>
+
+                            <!-- Foto 3: Persiapan pengukuran borehole camera -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>3️⃣</span> Persiapan Pengukuran Borehole Camera
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeDoc3" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeDoc3').click()">
+                                        <span class="upload-icon">🔧</span>
+                                        <span class="upload-text">Upload Foto Persiapan</span>
+                                        <span class="upload-hint">Persiapan pengukuran borehole camera</span>
+                                    </div>
+                                </div>
+                                <div id="boreholeDocPreview3" style="margin-top: 16px; display: none; position: relative;">
+                                    <img id="boreholeDocImage3" src="#" alt="Persiapan Pengukuran" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">✅ Foto 3: Persiapan pengukuran borehole camera</div>
+                                </div>
+                            </div>
+
+                            <!-- Foto 4: Kegiatan pengukuran borehole camera -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>4️⃣</span> Kegiatan Pengukuran Borehole Camera
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeDoc4" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeDoc4').click()">
+                                        <span class="upload-icon">📹</span>
+                                        <span class="upload-text">Upload Foto Kegiatan</span>
+                                        <span class="upload-hint">Kegiatan pengukuran borehole camera</span>
+                                    </div>
+                                </div>
+                                <div id="boreholeDocPreview4" style="margin-top: 16px; display: none; position: relative;">
+                                    <img id="boreholeDocImage4" src="#" alt="Kegiatan Pengukuran" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">✅ Foto 4: Kegiatan pengukuran borehole camera</div>
+                                </div>
+                            </div>
+
+                            <!-- Foto 5: Ukuran pipa PVC yang menjadi casing sumur -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>5️⃣</span> Ukuran Pipa PVC (Casing Sumur)
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeDoc5" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeDoc5').click()">
+                                        <span class="upload-icon">📏</span>
+                                        <span class="upload-text">Upload Foto Pipa PVC</span>
+                                        <span class="upload-hint">Ukuran pipa PVC casing sumur</span>
+                                    </div>
+                                </div>
+                                <div id="boreholeDocPreview5" style="margin-top: 16px; display: none; position: relative;">
+                                    <img id="boreholeDocImage5" src="#" alt="Pipa PVC" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">✅ Foto 5: Ukuran pipa PVC casing sumur</div>
+                                </div>
+                            </div>
+
+                            <!-- Foto 6: Pompa submersible yang digunakan -->
+                            <div class="well-data-item">
+                                <label class="well-label">
+                                    <span>6️⃣</span> Pompa Submersible
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" id="boreholeDoc6" accept="image/*" style="display: none;">
+                                    <div class="file-upload-label" onclick="document.getElementById('boreholeDoc6').click()">
+                                        <span class="upload-icon">⚙️</span>
+                                        <span class="upload-text">Upload Foto Pompa</span>
+                                        <span class="upload-hint">Pompa submersible yang digunakan</span>
+                                    </div>
+                                </div>
+                                <div id="boreholeDocPreview6" style="margin-top: 16px; display: none; position: relative;">
+                                    <img id="boreholeDocImage6" src="#" alt="Pompa Submersible" class="photo-preview">
+                                    <div style="font-size: 12px; color: #2563eb; margin-top: 4px;">✅ Foto 6: Pompa submersible</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BUTTON UNTUK PAGE 3 -->
+                <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                    <button onclick="resetActivityDocs()" class="btn-secondary" style="padding: 12px 24px;">🔄 Reset</button>
+                    <button onclick="saveActivityDocs()" class="btn-primary" style="padding: 12px 24px;">💾 Simpan Dokumentasi</button>
                 </div>
             </div>
         </div>
