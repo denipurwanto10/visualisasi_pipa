@@ -35,6 +35,16 @@ const inchToPixel = 6;
 
 let notificationTimeout = null;
 
+// Array untuk menyimpan gambar dokumentasi kegiatan per kategori
+let activityImages = {
+    doc1: [], // Papan Nama Lokasi Penyelidikan
+    doc2: [], // Kenampakan Sumur Bor Produksi
+    doc3: [], // Persiapan pengukuran borehole camera
+    doc4: [], // Kegiatan pengukuran borehole camera
+    doc5: [], // Ukuran pipa PVC casing sumur
+    doc6: []  // Pompa submersible
+};
+
 function switchPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
@@ -1131,59 +1141,42 @@ function addSaringan() {
     const saringanStart = depth;
     const saringanEnd = depth + size;
 
-    // PERBAIKAN 1: Validasi batas bawah pipa (paling penting!)
     if (saringanStart < 0) {
         showNotification(`Saringan tidak boleh dimulai dari kedalaman negatif`, 'error', 3000);
         return;
     }
 
-    // PERBAIKAN 2: CEK PALING PENTING - Saringan harus berakhir di dalam pipa atau tepat di batas pipa
-    // currentDepth adalah ujung bawah pipa terakhir (17.5 m)
     if (saringanEnd > currentDepth) {
         showNotification(`Saringan melebihi batas bawah pipa. Batas pipa: ${formatNumber(currentDepth)} m`, 'error', 4000);
         return;
     }
 
-    // PERBAIKAN 3: Cek tumpang tindih dengan saringan lain
     for (const existingSaringan of saringanPosisi) {
         const existingStart = existingSaringan.depth;
         const existingEnd = existingSaringan.depth + existingSaringan.size;
 
-        // Deteksi tumpang tindih (overlap)
         if (saringanEnd > existingStart && saringanStart < existingEnd) {
             showNotification(`Saringan tumpang tindih dengan saringan di ${formatNumber(existingStart)}-${formatNumber(existingEnd)} m`, 'error', 4000);
             return;
         }
     }
 
-    // PERBAIKAN 4: Validasi open hole - saringan boleh SENTUH open hole
     if (openHole) {
-        // Saringan boleh tepat di atas open hole (saringanEnd == openHole.startDepth diperbolehkan)
-        // Contoh: saringan 16.7-16.9 dengan open hole 17.5-19.6 itu VALID (16.9 < 17.5)
         if (saringanEnd > openHole.startDepth) {
             showNotification(`Saringan tidak boleh masuk ke area open hole. Open hole mulai dari ${formatNumber(openHole.startDepth)} m`, 'error', 4000);
             return;
         }
         
-        // Notifikasi jika saringan sangat dekat (tapi tidak wajib)
         const distanceToOpenHole = openHole.startDepth - saringanEnd;
         if (distanceToOpenHole > 0 && distanceToOpenHole < 0.1) {
             showNotification(`Saringan ditempatkan ${formatNumber(distanceToOpenHole)} m di atas open hole`, 'info', 3000);
         }
     }
 
-    // PERBAIKAN 5: HAPUS pengecekan pipeSegments.find yang terlalu ketat!
-    // Kita tidak perlu cek apakah saringan dalam satu segmen pipa karena:
-    // 1. currentDepth sudah memastikan saringan dalam batas total pipa
-    // 2. Pengecekan segmen menyebabkan error untuk saringan di 16.7 m
-
-    // Tambahkan saringan
     saringanPosisi.push({ depth, size });
     
-    // Urutkan saringan berdasarkan kedalaman untuk tampilan yang rapi
     saringanPosisi.sort((a, b) => a.depth - b.depth);
     
-    // Reset input
     saringanDepth.value = '';
     saringanSize.value = '3';
 
@@ -1550,6 +1543,7 @@ function saveWellData() {
         pumpType,
         pumpPosition,
         boreholeImages,
+        activityImages: activityImages,
         timestamp: new Date().toISOString()
     };
     
@@ -1616,6 +1610,9 @@ function resetWellData(showAlert = true) {
         const el = document.getElementById(id);
         if (el) el.textContent = '-';
     });
+
+    // Reset activity images
+    resetActivityDocs(false);
 
     localStorage.removeItem('wellData');
 
@@ -1743,9 +1740,8 @@ function handleBoreholeImageUpload(e, index) {
                     let depthText = '-';
                     
                     switch(index) {
-                        case 1: // Ujung Pipa Awal - cari pipa dengan start terkecil
+                        case 1: // Ujung Pipa Awal
                             if (pipeSegments.length > 0) {
-                                // Cari segmen pipa dengan start depth terkecil (paling atas)
                                 const topPipe = pipeSegments.reduce((min, p) => 
                                     p.start < min.start ? p : min, pipeSegments[0]);
                                 depthValue = groundLevelSet ? topPipe.start - groundLevel : topPipe.start;
@@ -1770,9 +1766,8 @@ function handleBoreholeImageUpload(e, index) {
                             }
                             break;
                             
-                        case 3: // Batas Pipa - cari pipa dengan end terbesar
+                        case 3: // Batas Pipa
                             if (pipeSegments.length > 0) {
-                                // Cari segmen pipa dengan end depth terbesar (paling bawah)
                                 const bottomPipe = pipeSegments.reduce((max, p) => 
                                     p.end > max.end ? p : max, pipeSegments[0]);
                                 depthValue = groundLevelSet ? bottomPipe.end - groundLevel : bottomPipe.end;
@@ -1788,9 +1783,8 @@ function handleBoreholeImageUpload(e, index) {
                             }
                             break;
                             
-                        case 4: // SCREEN PERPORASI - CARI SARINGAN PALING ATAS
+                        case 4: // Screen Perporasi
                             if (saringanPosisi.length > 0) {
-                                // CARI SARINGAN DENGAN KEDALAMAN TERKECIL (PALING ATAS)
                                 const topScreen = saringanPosisi.reduce((min, s) => 
                                     s.depth < min.depth ? s : min, saringanPosisi[0]);
                                 
@@ -1858,6 +1852,281 @@ function setupBoreholeImageHandlers() {
         }
     }
 }
+
+// ====================== FUNGSI UNTUK PAGE 3 (DOKUMENTASI KEGIATAN) ======================
+
+function setupActivityDocHandlers() {
+    const categoryNames = {
+        doc1: 'Papan Nama Lokasi Penyelidikan',
+        doc2: 'Kenampakan Sumur Bor Produksi',
+        doc3: 'Persiapan pengukuran borehole camera',
+        doc4: 'Kegiatan pengukuran borehole camera',
+        doc5: 'Ukuran pipa PVC casing sumur',
+        doc6: 'Pompa submersible'
+    };
+    
+    for (let i = 1; i <= 6; i++) {
+        const input = document.getElementById(`boreholeDoc${i}`);
+        if (input) {
+            input.setAttribute('multiple', 'multiple');
+            input.removeEventListener('change', createActivityHandler(i, categoryNames[`doc${i}`]));
+            input.addEventListener('change', createActivityHandler(i, categoryNames[`doc${i}`]));
+        }
+    }
+}
+
+function createActivityHandler(index, categoryName) {
+    return function(e) {
+        handleActivityImageUpload(e, index, categoryName);
+    };
+}
+
+function handleActivityImageUpload(e, index, categoryName) {
+    const files = Array.from(e.target.files);
+    const categoryKey = `doc${index}`;
+    
+    if (files.length === 0) return;
+    
+    // Hitung total foto setelah upload
+    const totalAfterUpload = activityImages[categoryKey].length + files.length;
+    
+    // Validasi maksimal 3 foto per kategori
+    if (totalAfterUpload > 3) {
+        const sisaSlot = 3 - activityImages[categoryKey].length;
+        showNotification(`Maksimal 3 foto untuk ${categoryName}. Anda bisa menambah ${sisaSlot} foto lagi.`, 'warning', 4000);
+        
+        // Jika masih ada slot, upload hanya sebanyak slot yang tersisa
+        if (sisaSlot > 0) {
+            const filesToUpload = files.slice(0, sisaSlot);
+            processActivityImages(filesToUpload, index, categoryKey, categoryName);
+        }
+        
+        // Reset input file
+        e.target.value = '';
+        return;
+    }
+    
+    // Proses semua file jika masih dalam batas
+    processActivityImages(files, index, categoryKey, categoryName);
+    
+    // Reset input file
+    e.target.value = '';
+}
+
+function processActivityImages(files, index, categoryKey, categoryName) {
+    // Proses setiap file
+    files.forEach((file) => {
+        // Validasi ukuran file (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification(`File ${file.name} melebihi 5MB`, 'error', 3000);
+            return;
+        }
+        
+        // Validasi tipe file
+        if (!file.type.match('image.*')) {
+            showNotification(`File ${file.name} bukan gambar`, 'error', 3000);
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(readerEvent) {
+            // Tambahkan ke array
+            activityImages[categoryKey].push({
+                id: Date.now() + Math.random() + index,
+                dataUrl: readerEvent.target.result,
+                name: file.name,
+                category: categoryKey,
+                categoryName: categoryName,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Update preview
+            updateActivityPreview(index);
+            
+            // Tampilkan notifikasi sukses
+            showNotification(`Foto ${categoryName} berhasil diupload`, 'success', 2000);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function updateActivityPreview(index) {
+    const categoryKey = `doc${index}`;
+    const container = document.getElementById(`activityPreview${index}`);
+    
+    if (!container) {
+        // Buat container jika belum ada
+        createActivityPreviewContainer(index);
+        return;
+    }
+    
+    const images = activityImages[categoryKey];
+    
+    if (images.length === 0) {
+        container.innerHTML = `
+            <div class="activity-empty-state" style="grid-column: 1/-1; text-align: center; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1; margin-top: 10px;">
+                <span style="font-size: 24px; display: block; margin-bottom: 8px;">📷</span>
+                <p style="color: #64748b; font-size: 13px;">Belum ada foto untuk kategori ini</p>
+                <p style="color: #94a3b8; font-size: 11px; margin-top: 4px;">Maksimal 3 foto, klik tombol upload untuk menambahkan</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="activity-preview-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-top: 16px;">';
+    
+    images.forEach((img, imgIndex) => {
+        html += `
+            <div class="activity-preview-item" style="position: relative; background: #f8fafc; border-radius: 12px; padding: 8px; border: 1px solid #e2e8f0;">
+                <span style="position: absolute; top: 2px; left: 2px; background: #2563eb; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; z-index: 5;">${imgIndex + 1}</span>
+                <img src="${img.dataUrl}" alt="${img.name}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="margin-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 10px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70px;">${img.name.substring(0, 10)}${img.name.length > 10 ? '...' : ''}</span>
+                    <button onclick="deleteActivityImage('${categoryKey}', '${img.id}')" style="background: #fee2e2; border: none; color: #ef4444; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold;">×</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Tambahkan indikator sisa slot
+    const sisaSlot = 3 - images.length;
+    if (sisaSlot > 0) {
+        html += `
+            <div class="activity-slot-indicator" style="background: #f0f9ff; border: 1px dashed #3b82f6; border-radius: 12px; padding: 20px; text-align: center; color: #3b82f6; font-size: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <span style="font-size: 20px; margin-bottom: 5px;">📤</span>
+                <span>Sisa ${sisaSlot} slot</span>
+                <span style="font-size: 10px; margin-top: 5px;">Maksimal 3 foto</span>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function createActivityPreviewContainer(index) {
+    const containerId = `activityPreview${index}`;
+    
+    // Cari elemen induk (well-data-item)
+    const parentElement = document.getElementById(`boreholeDoc${index}`)?.closest('.well-data-item');
+    
+    if (parentElement) {
+        // Buat container preview jika belum ada
+        const previewContainer = document.createElement('div');
+        previewContainer.id = containerId;
+        previewContainer.className = 'activity-preview-wrapper';
+        previewContainer.style.marginTop = '16px';
+        previewContainer.innerHTML = `
+            <div class="activity-empty-state" style="text-align: center; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
+                <span style="font-size: 24px; display: block; margin-bottom: 8px;">📷</span>
+                <p style="color: #64748b; font-size: 13px;">Belum ada foto untuk kategori ini</p>
+                <p style="color: #94a3b8; font-size: 11px; margin-top: 4px;">Maksimal 3 foto, klik tombol upload untuk menambahkan</p>
+            </div>
+        `;
+        
+        parentElement.appendChild(previewContainer);
+    }
+}
+
+function deleteActivityImage(categoryKey, imageId) {
+    if (activityImages[categoryKey]) {
+        activityImages[categoryKey] = activityImages[categoryKey].filter(img => img.id != imageId);
+        
+        // Dapatkan index dari categoryKey (doc1 -> 1)
+        const index = parseInt(categoryKey.replace('doc', ''));
+        updateActivityPreview(index);
+        
+        showNotification('Foto berhasil dihapus', 'success', 2000);
+    }
+}
+
+function resetActivityDocs(showAlert = true) {
+    // Reset semua array gambar
+    activityImages = {
+        doc1: [],
+        doc2: [],
+        doc3: [],
+        doc4: [],
+        doc5: [],
+        doc6: []
+    };
+    
+    // Hapus semua preview
+    for (let i = 1; i <= 6; i++) {
+        const previewContainer = document.getElementById(`activityPreview${i}`);
+        if (previewContainer) {
+            previewContainer.remove();
+        }
+        
+        // Reset input file
+        const input = document.getElementById(`boreholeDoc${i}`);
+        if (input) {
+            input.value = '';
+        }
+    }
+    
+    // Buat ulang preview containers dengan state kosong
+    for (let i = 1; i <= 6; i++) {
+        createActivityPreviewContainer(i);
+    }
+    
+    if (showAlert) {
+        showNotification('Dokumentasi kegiatan berhasil direset', 'success', 3000);
+    }
+}
+
+function saveActivityDocs() {
+    // Simpan hanya activityImages ke localStorage
+    try {
+        const savedData = localStorage.getItem('wellData');
+        let wellData = savedData ? JSON.parse(savedData) : {};
+        
+        wellData.activityImages = activityImages;
+        wellData.timestamp = new Date().toISOString();
+        
+        localStorage.setItem('wellData', JSON.stringify(wellData));
+        showNotification('Dokumentasi kegiatan berhasil disimpan!', 'success', 3000);
+    } catch (e) {
+        console.error('Error saving activity docs:', e);
+        showNotification('Gagal menyimpan dokumentasi', 'error', 3000);
+    }
+}
+
+function loadActivityImages() {
+    const savedWellData = localStorage.getItem('wellData');
+    if (savedWellData) {
+        try {
+            const data = JSON.parse(savedWellData);
+            if (data.activityImages) {
+                activityImages = data.activityImages;
+                
+                // Render preview untuk setiap kategori
+                for (let i = 1; i <= 6; i++) {
+                    const categoryKey = `doc${i}`;
+                    if (activityImages[categoryKey] && activityImages[categoryKey].length > 0) {
+                        // Hapus container lama jika ada
+                        const oldContainer = document.getElementById(`activityPreview${i}`);
+                        if (oldContainer) {
+                            oldContainer.remove();
+                        }
+                        
+                        // Buat container baru
+                        createActivityPreviewContainer(i);
+                        
+                        // Update preview
+                        setTimeout(() => {
+                            updateActivityPreview(i);
+                        }, 100);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Error loading activity images:', e);
+        }
+    }
+}
+
+// ====================== EVENT LISTENERS ======================
 
 canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect();
@@ -1974,6 +2243,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     setupBoreholeImageHandlers();
+    setupActivityDocHandlers();
     
     drawVisualization();
     updateGroundLevelInfo();
@@ -1982,6 +2252,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateBoreholeDepthLabels();
     resetWellData(false);
     
+    // Load saved data
     const savedWellData = localStorage.getItem('wellData');
     if (savedWellData) {
         try {
@@ -2123,6 +2394,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
+            }
+            
+            // Load activity images
+            if (data.activityImages) {
+                activityImages = data.activityImages;
+                loadActivityImages();
             }
         } catch (e) {
             console.error('Error loading saved well data:', e);
@@ -2152,153 +2429,8 @@ window.addEventListener("load", () => {
     updateOpenHoleInfo();
     updateBoreholeDepthLabels();
     resetWellData(false);
-    
-    const savedWellData = localStorage.getItem('wellData');
-    if (savedWellData) {
-        try {
-            const data = JSON.parse(savedWellData);
-            if (document.getElementById('companyName')) document.getElementById('companyName').value = data.companyName || '';
-            if (document.getElementById('shallowWellNumber')) document.getElementById('shallowWellNumber').value = data.shallowWellNumber || '';
-            if (document.getElementById('companyAddress')) document.getElementById('companyAddress').value = data.address || '';
-            if (document.getElementById('province')) document.getElementById('province').value = data.province || '';
-            if (document.getElementById('latitude')) document.getElementById('latitude').value = data.latitude || '';
-            if (document.getElementById('longitude')) document.getElementById('longitude').value = data.longitude || '';
-            if (document.getElementById('elevation')) document.getElementById('elevation').value = data.elevation || '';
-            if (document.getElementById('city')) document.getElementById('city').value = data.city || '';
-            if (document.getElementById('district')) document.getElementById('district').value = data.district || '';
-            if (document.getElementById('village')) document.getElementById('village').value = data.village || '';
-            if (document.getElementById('boreholeDate')) document.getElementById('boreholeDate').value = data.boreholeDate || '';
-            if (document.getElementById('wellNumber')) document.getElementById('wellNumber').value = data.wellNumber || '';
-            if (document.getElementById('piezoDistance')) document.getElementById('piezoDistance').value = data.piezoDistance || '';
-            if (document.getElementById('pumpType')) document.getElementById('pumpType').value = data.pumpType || '';
-            if (document.getElementById('pumpPosition')) document.getElementById('pumpPosition').value = data.pumpPosition || '';
-            
-            if (data.boreholeImages) {
-                if (data.boreholeImages.wellPhoto) {
-                    const previewImage = document.getElementById('previewImage');
-                    const photoPreview = document.getElementById('photoPreview');
-                    if (previewImage && photoPreview) {
-                        previewImage.src = data.boreholeImages.wellPhoto;
-                        photoPreview.style.display = 'block';
-                        photoPreview.style.position = 'relative';
-                        
-                        const existingDeleteBtn = photoPreview.querySelector('.image-delete-btn');
-                        if (existingDeleteBtn) existingDeleteBtn.remove();
-                        
-                        const deleteBtn = createDeleteButton();
-                        deleteBtn.onclick = function() {
-                            photoPreview.style.display = 'none';
-                            previewImage.src = '#';
-                            document.getElementById('wellPhoto').value = '';
-                            deleteBtn.remove();
-                        };
-                        photoPreview.appendChild(deleteBtn);
-                    }
-                }
-                
-                for (let i = 1; i <= 5; i++) {
-                    const imgKey = `borehole${i}`;
-                    if (data.boreholeImages[imgKey]) {
-                        const previewImage = document.getElementById(`boreholePreviewImage${i}`);
-                        const boreholePreview = document.getElementById(`boreholePreview${i}`);
-                        const previewDepth = document.getElementById(`previewDepth${i}`);
-                        
-                        if (previewImage && boreholePreview) {
-                            previewImage.src = data.boreholeImages[imgKey];
-                            boreholePreview.style.display = 'block';
-                            boreholePreview.style.position = 'relative';
-                            
-                            const existingDeleteBtn = boreholePreview.querySelector('.image-delete-btn');
-                            if (existingDeleteBtn) existingDeleteBtn.remove();
-                            
-                            const deleteBtn = createDeleteButton();
-                            deleteBtn.onclick = function() {
-                                boreholePreview.style.display = 'none';
-                                previewImage.src = '#';
-                                document.getElementById(`boreholeImage${i}`).value = '';
-                                deleteBtn.remove();
-                            };
-                            boreholePreview.appendChild(deleteBtn);
-                            
-                            if (previewDepth) {
-                                let depthValue = '-';
-                                let depthText = '-';
-                                
-                                switch(i) {
-                                    case 1:
-                                        if (pipeSegments.length > 0) {
-                                            const firstPipe = pipeSegments[0];
-                                            depthValue = groundLevelSet ? firstPipe.start - groundLevel : firstPipe.start;
-                                            if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
-                                                else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m.bmt`;
-                                            } else {
-                                                depthText = `${formatNumber(depthValue)} m`;
-                                            }
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                    case 2:
-                                        if (matSet) {
-                                            if (matLevel > 0) depthText = `${formatNumber(matLevel)} m.bmt`;
-                                            else if (matLevel < 0) depthText = `${formatNumber(Math.abs(matLevel))} m di atas tanah (artesis)`;
-                                            else depthText = `0 m.bmt`;
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                    case 3:
-                                        if (pipeSegments.length > 0) {
-                                            const lastPipe = pipeSegments[pipeSegments.length - 1];
-                                            depthValue = groundLevelSet ? lastPipe.end - groundLevel : lastPipe.end;
-                                            if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
-                                                else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m.bmt`;
-                                            } else {
-                                                depthText = `${formatNumber(depthValue)} m`;
-                                            }
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                    case 4:
-                                        if (saringanPosisi.length > 0) {
-                                            const firstScreen = saringanPosisi[0];
-                                            depthValue = groundLevelSet ? firstScreen.depth - groundLevel : firstScreen.depth;
-                                            if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
-                                                else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m.bmt`;
-                                            } else {
-                                                depthText = `${formatNumber(depthValue)} m`;
-                                            }
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                    case 5:
-                                        if (currentDepth > 0) {
-                                            let baseDepth = openHole ? openHole.endDepth : currentDepth;
-                                            depthValue = groundLevelSet ? baseDepth - groundLevel : baseDepth;
-                                            if (groundLevelSet) {
-                                                if (depthValue > 0) depthText = `${formatNumber(depthValue)} m.bmt`;
-                                                else if (depthValue < 0) depthText = `${formatNumber(Math.abs(depthValue))} m di atas tanah`;
-                                                else depthText = `0 m.bmt`;
-                                            } else {
-                                                depthText = `${formatNumber(depthValue)} m`;
-                                            }
-                                            previewDepth.textContent = depthText;
-                                        }
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            console.error('Error loading saved well data:', e);
-        }
-    }
+    setupActivityDocHandlers();
+    loadActivityImages();
 });
 
 function downloadPDF() {
@@ -2370,20 +2502,20 @@ function generatePDF(logoBase64) {
         }
 
         let screenInfo = '-';
-if (saringanPosisi && saringanPosisi.length > 0) {
-    screenInfo = saringanPosisi
-        .sort((a, b) => a.depth - b.depth)
-        .map(s => {
-            const sEnd = s.depth + s.size;
-            if (groundLevelSet) {
-                const relStart = s.depth - groundLevel;
-                const relEnd = sEnd - groundLevel;
-                return `${formatNumber(relStart)} - ${formatNumber(relEnd)} m.bmt`; // DARI m ke m.bmt
-            }
-            return `${formatNumber(s.depth)} - ${formatNumber(sEnd)} m`;
-        })
-        .join(', ');
-}
+        if (saringanPosisi && saringanPosisi.length > 0) {
+            screenInfo = saringanPosisi
+                .sort((a, b) => a.depth - b.depth)
+                .map(s => {
+                    const sEnd = s.depth + s.size;
+                    if (groundLevelSet) {
+                        const relStart = s.depth - groundLevel;
+                        const relEnd = sEnd - groundLevel;
+                        return `${formatNumber(relStart)} - ${formatNumber(relEnd)} m.bmt`;
+                    }
+                    return `${formatNumber(s.depth)} - ${formatNumber(sEnd)} m`;
+                })
+                .join(', ');
+        }
 
         let pipeTopInfo = '-';
         if (pipeSegments && pipeSegments.length > 0 && groundLevelSet) {
@@ -2397,13 +2529,13 @@ if (saringanPosisi && saringanPosisi.length > 0) {
         }
 
         let kedalamanSumur = '-';
-if (currentDepth > 0) {
-    if (openHole) {
-        kedalamanSumur = `${formatNumber(openHole.endDepth)} m.bmt`;
-    } else {
-        kedalamanSumur = `${formatNumber(currentDepth)} m.bmt`;
-    }
-}
+        if (currentDepth > 0) {
+            if (openHole) {
+                kedalamanSumur = `${formatNumber(openHole.endDepth)} m.bmt`;
+            } else {
+                kedalamanSumur = `${formatNumber(currentDepth)} m.bmt`;
+            }
+        }
 
         // Fungsi untuk menggambar cell tabel
         function drawCell(x, y, w, h, opts = {}) {
@@ -2521,6 +2653,19 @@ if (currentDepth > 0) {
             return names[index] || `Gambar ${index}`;
         }
 
+        // Fungsi untuk mendapatkan judul dokumentasi
+        function getDocTitle(index) {
+            const titles = {
+                1: 'Papan Nama Lokasi Penyelidikan',
+                2: 'Kenampakan Sumur Bor Produksi',
+                3: 'Persiapan Pengukuran Borehole Camera',
+                4: 'Kegiatan Pengukuran Borehole Camera',
+                5: 'Ukuran Pipa PVC (Casing Sumur)',
+                6: 'Pompa Submersible'
+            };
+            return titles[index] || `Dokumentasi ${index}`;
+        }
+
         // =========== HALAMAN 1: DATA TEKNIS DAN DUA KOLOM GAMBAR ===========
         let titleY = 20;
         
@@ -2625,13 +2770,12 @@ if (currentDepth > 0) {
 
         // ===== DUA KOLOM GAMBAR: BOREHOLE (KIRI - 30%) DAN KONSTRUKSI (KANAN - 70%) =====
         const remainH = pageH - curY - 20;
-        const leftColW = tableW * 0.3; // 30% untuk borehole
-        const rightColW = tableW * 0.7; // 70% untuk konstruksi
+        const leftColW = tableW * 0.3;
+        const rightColW = tableW * 0.7;
 
         // ===== KOLOM KIRI - GAMBAR BOREHOLE (DENGAN 5 FOTO) =====
         drawCell(tableOffsetX, curY, leftColW, remainH);
         
-        // Judul
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(9);
         const bhLabelX = tableOffsetX + leftColW / 2;
@@ -2640,32 +2784,26 @@ if (currentDepth > 0) {
         pdf.setLineWidth(0.2);
         pdf.line(bhLabelX - bhTextW / 2, curY + 9, bhLabelX + bhTextW / 2, curY + 9);
 
-        // Daftar gambar borehole (5 gambar)
         const imageStartY = curY + 15;
         const imageWidth = leftColW - 12;
         const imageHeight = 24;
-        const imageSpacing = 3;
         let imageCurrentY = imageStartY;
 
         for (let i = 1; i <= 5; i++) {
             const previewImage = document.getElementById(`boreholePreviewImage${i}`);
             const depthSpan = document.getElementById(`previewDepth${i}`);
             
-            // Kotak gambar
             const imgX = tableOffsetX + 4;
             const imgY = imageCurrentY;
             const imgW = imageWidth;
             const imgH = imageHeight;
             
-            // Gambar border
             pdf.setDrawColor(200, 200, 200);
             pdf.setLineWidth(0.3);
             pdf.rect(imgX, imgY, imgW, imgH, 'S');
             
-            // Cek apakah ada gambar
             if (previewImage && previewImage.src && previewImage.src !== '#' && previewImage.src.startsWith('data:')) {
                 try {
-                    // Hitung proporsi gambar agar fit di kotak
                     let imgRatio;
                     if (previewImage.naturalWidth && previewImage.naturalHeight) {
                         imgRatio = previewImage.naturalWidth / previewImage.naturalHeight;
@@ -2704,13 +2842,11 @@ if (currentDepth > 0) {
                 pdf.setFont('helvetica', 'normal');
             }
             
-            // Label nama gambar
             pdf.setFont('helvetica', 'bold');
             pdf.setFontSize(7);
             pdf.setTextColor(0, 0, 0);
             pdf.text(getBoreholeImageName(i), imgX, imgY + imgH + 2.5);
             
-            // Kedalaman dalam satuan m.bmt (meter di Bawah Muka Tanah)
             pdf.setFont('helvetica', 'normal');
             pdf.setFontSize(6);
             pdf.setTextColor(37, 99, 235);
@@ -3016,12 +3152,212 @@ if (currentDepth > 0) {
             pdf.setFont('helvetica', 'normal');
         }
 
+       // =========== HALAMAN 3: DOKUMENTASI KEGIATAN BOREHOLE CAMERA (1/2) ===========
+pdf.addPage();
+
+// Header
+pdf.setFont('helvetica', 'bold');
+pdf.setFontSize(14);
+pdf.setTextColor(0, 0, 0);
+pdf.text('DOKUMENTASI KEGIATAN BOREHOLE CAMERA', pageW / 2, 20, { align: 'center' });
+
+// Atur posisi awal
+let currentY = 35;
+const categoryHeight = 70; // Tinggi per kategori
+const categorySpacing = 10; // Jarak antar kategori
+
+// Tampilkan 3 kategori pertama (1-3)
+for (let i = 1; i <= 3; i++) {
+    const categoryKey = `doc${i}`;
+    
+    // Judul kategori
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.setTextColor(37, 99, 235);
+    pdf.text(`${i}. ${getDocTitle(i)}`, tableOffsetX, currentY);
+    
+    // Area foto
+    const startX = tableOffsetX;
+    const startY = currentY + 5;
+    const fotoWidth = 45;
+    const fotoHeight = 45;
+    const fotoSpacing = 6;
+    
+    // Dapatkan array gambar
+    const images = (activityImages && activityImages[categoryKey]) ? activityImages[categoryKey] : [];
+    
+    if (images.length > 0) {
+        // Tampilkan semua foto dalam grid 3 kolom
+        const maxFotoPerBaris = 3;
+        
+        for (let j = 0; j < images.length; j++) {
+            const baris = Math.floor(j / maxFotoPerBaris);
+            const kolom = j % maxFotoPerBaris;
+            
+            const imgX = startX + (kolom * (fotoWidth + fotoSpacing));
+            const imgY = startY + (baris * (fotoHeight + fotoSpacing));
+            
+            // Border foto
+            pdf.setDrawColor(180, 180, 180);
+            pdf.setLineWidth(0.3);
+            pdf.rect(imgX, imgY, fotoWidth, fotoHeight, 'S');
+            
+            try {
+                const imgData = images[j].dataUrl;
+                
+                // Hitung aspect ratio
+                let drawW, drawH;
+                const padding = 4;
+                const imgRatio = 4/3;
+                
+                if ((fotoWidth - padding) / (fotoHeight - padding) > imgRatio) {
+                    drawH = fotoHeight - padding;
+                    drawW = drawH * imgRatio;
+                } else {
+                    drawW = fotoWidth - padding;
+                    drawH = drawW / imgRatio;
+                }
+                
+                const drawX = imgX + (fotoWidth - drawW) / 2;
+                const drawY = imgY + (fotoHeight - drawH) / 2;
+                
+                addImageToPDF(pdf, imgData, drawX, drawY, drawW, drawH);
+                
+                // Nomor urut foto
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(8);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text(`${j + 1}`, imgX + 4, imgY + 10);
+                
+            } catch (e) {
+                pdf.setFont('helvetica', 'italic');
+                pdf.setFontSize(7);
+                pdf.setTextColor(150, 150, 150);
+                pdf.text('Error', imgX + 10, imgY + 25);
+            }
+        }
+    } else {
+        // Tidak ada foto
+        pdf.setFillColor(245, 245, 245);
+        pdf.setDrawColor(200, 200, 200);
+        pdf.rect(startX, startY, fotoWidth, fotoHeight, 'FD');
+        
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(7);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('Tidak ada foto', startX + 8, startY + 25);
+    }
+    
+    // Update posisi Y untuk kategori berikutnya
+    currentY += categoryHeight + categorySpacing;
+}
+
+// =========== HALAMAN 4: DOKUMENTASI KEGIATAN BOREHOLE CAMERA (2/2) ===========
+pdf.addPage();
+
+// Header
+pdf.setFont('helvetica', 'bold');
+pdf.setFontSize(14);
+pdf.setTextColor(0, 0, 0);
+pdf.text('DOKUMENTASI KEGIATAN BOREHOLE CAMERA', pageW / 2, 20, { align: 'center' });
+
+// Reset posisi Y
+currentY = 35;
+
+// Tampilkan 3 kategori sisanya (4-6)
+for (let i = 4; i <= 6; i++) {
+    const categoryKey = `doc${i}`;
+    
+    // Judul kategori
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.setTextColor(37, 99, 235);
+    pdf.text(`${i}. ${getDocTitle(i)}`, tableOffsetX, currentY);
+    
+    // Area foto
+    const startX = tableOffsetX;
+    const startY = currentY + 5;
+    const fotoWidth = 45;
+    const fotoHeight = 45;
+    const fotoSpacing = 6;
+    
+    // Dapatkan array gambar
+    const images = (activityImages && activityImages[categoryKey]) ? activityImages[categoryKey] : [];
+    
+    if (images.length > 0) {
+        // Tampilkan semua foto dalam grid 3 kolom
+        const maxFotoPerBaris = 3;
+        
+        for (let j = 0; j < images.length; j++) {
+            const baris = Math.floor(j / maxFotoPerBaris);
+            const kolom = j % maxFotoPerBaris;
+            
+            const imgX = startX + (kolom * (fotoWidth + fotoSpacing));
+            const imgY = startY + (baris * (fotoHeight + fotoSpacing));
+            
+            // Border foto
+            pdf.setDrawColor(180, 180, 180);
+            pdf.setLineWidth(0.3);
+            pdf.rect(imgX, imgY, fotoWidth, fotoHeight, 'S');
+            
+            try {
+                const imgData = images[j].dataUrl;
+                
+                // Hitung aspect ratio
+                let drawW, drawH;
+                const padding = 4;
+                const imgRatio = 4/3;
+                
+                if ((fotoWidth - padding) / (fotoHeight - padding) > imgRatio) {
+                    drawH = fotoHeight - padding;
+                    drawW = drawH * imgRatio;
+                } else {
+                    drawW = fotoWidth - padding;
+                    drawH = drawW / imgRatio;
+                }
+                
+                const drawX = imgX + (fotoWidth - drawW) / 2;
+                const drawY = imgY + (fotoHeight - drawH) / 2;
+                
+                addImageToPDF(pdf, imgData, drawX, drawY, drawW, drawH);
+                
+                // Nomor urut foto
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(8);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text(`${j + 1}`, imgX + 4, imgY + 10);
+                
+            } catch (e) {
+                pdf.setFont('helvetica', 'italic');
+                pdf.setFontSize(7);
+                pdf.setTextColor(150, 150, 150);
+                pdf.text('Error', imgX + 10, imgY + 25);
+            }
+        }
+    } else {
+        // Tidak ada foto
+        pdf.setFillColor(245, 245, 245);
+        pdf.setDrawColor(200, 200, 200);
+        pdf.rect(startX, startY, fotoWidth, fotoHeight, 'FD');
+        
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(7);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('Tidak ada foto', startX + 8, startY + 25);
+    }
+    
+    // Update posisi Y untuk kategori berikutnya
+    currentY += categoryHeight + categorySpacing;
+}
+
+        // =========== AKHIR PDF ===========
         pdf.save('laporan_konstruksi_sumur_bor.pdf');
         showNotification('PDF berhasil diunduh!', 'success', 3000);
         
     }, 100);
 }
 
+// Ekspor fungsi ke window
 window.switchPage = switchPage;
 window.updateVisualization = updateVisualization;
 window.addSaringan = addSaringan;
@@ -3039,3 +3375,6 @@ window.resetWellData = resetWellData;
 window.closeNotification = closeNotification;
 window.drawVisualization = drawVisualization;
 window.downloadPDF = downloadPDF;
+window.resetActivityDocs = resetActivityDocs;
+window.saveActivityDocs = saveActivityDocs;
+window.deleteActivityImage = deleteActivityImage;
