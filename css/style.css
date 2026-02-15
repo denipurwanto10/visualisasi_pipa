@@ -44,6 +44,12 @@ body {
 }
 
 .navigation-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.95);
+    /* sisanya tetap sama */
     display: flex;
     justify-content: space-between;
     align-items: center;
