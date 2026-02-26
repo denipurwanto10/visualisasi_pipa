@@ -3016,141 +3016,170 @@ function generatePDF(logoBase64) {
             }
         }
 
-        // =========== HALAMAN 2: DATA BOREHOLE CAMERA ===========
-        pdf.addPage();
+      // =========== HALAMAN 2: DATA BOREHOLE CAMERA ===========
+pdf.addPage();
 
-        titleY = 20;
-        
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(14);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('DATA BOREHOLE CAMERA', pageW / 2, titleY, { align: 'center' });
+titleY = 20;
 
-        const p2LabelW = 50;
-        const p2ValW = tableW - p2LabelW;
-        const p2RowH = 7;
-        let p2Y = titleY + 10;
+pdf.setFont('helvetica', 'bold');
+pdf.setFontSize(14);
+pdf.setTextColor(0, 0, 0);
+pdf.text('DATA BOREHOLE CAMERA', pageW / 2, titleY, { align: 'center' });
 
-        function dataRow(label, value = '-') {
-            pdf.setFontSize(8);
-            
-            const maxWidth = p2ValW - 4;
-            const valueLines = pdf.splitTextToSize(String(value), maxWidth);
-            const lineHeight = 3.8;
-            const rowHeight = Math.max(p2RowH, valueLines.length * lineHeight + 2);
-            
-            const currentY = p2Y;
-            
-            drawCell(tableOffsetX, currentY, p2LabelW, rowHeight);
-            cellText(label, tableOffsetX, currentY, p2LabelW, rowHeight, { 
-                fontSize: 8, 
-                paddingX: 2, 
-                vCenter: true 
-            });
-            
-            drawCell(tableOffsetX + p2LabelW, currentY, p2ValW, rowHeight);
-            
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(0, 0, 0);
-            
-            let textY = currentY + 3;
-            valueLines.forEach((line, i) => {
-                pdf.text(line, tableOffsetX + p2LabelW + 2, textY + (i * lineHeight));
-            });
-            
-            p2Y += rowHeight;
-        }
+// Lebar kolom untuk halaman 2
+const p2LabelW = 48;
+const p2ValW = tableW - p2LabelW; // 107
+let p2Y = titleY + 10;
 
-        dataRow('Nama Perusahaan', companyName);
-        dataRow('Nomor Urut Sumur Bor', shallowWellNumber);
-        dataRow('Alamat', companyAddress);
-        dataRow('Sumur', wellNumber);
-        dataRow('Koordinat', `X = ${longitude}, Y = ${latitude}`);
-        dataRow('Elevasi', elevation + ' mdpl');
-        dataRow('Tanggal pelaksanaan borehole', formattedDate);
-        dataRow('Kedalaman Konstruksi Sumur', totalPipeLength > 0 ? `${formatNumber(totalPipeLength)} m.bmt` : '-');
-        dataRow('Kedalaman Sumur (sudah terendapkan lumpur/kotoran)', kedalamanSumur);
-        dataRow('Konstruksi Pipa (diameter)', pipeInfo ? pipeInfo + ' Inchi' : '-');
-        dataRow('Screen', screenInfo);
-        dataRow('Jarak Muka Pipa ke Permukaan Tanah', pipeTopInfo);
-        dataRow('Jarak Piezometer ke Sumur', piezoDistance ? piezoDistance + ' m' : '-');
-        dataRow('Jenis/Kap. Pompa', pumpType);
-        dataRow('Posisi Pompa', pumpPosition ? pumpPosition + ' m' : '-');
-
-        const fotoH = 60;
-        const fotoCellY = p2Y;
-
-        drawCell(tableOffsetX, fotoCellY, p2LabelW, fotoH);
-        cellText('Foto Sumur Bor', tableOffsetX, fotoCellY, p2LabelW, fotoH, { 
-            fontSize: 8, 
-            paddingX: 2,
-            bold: false,
-            vCenter: false
+// Fungsi untuk baris data di halaman 2 dengan jarak proporsional
+function addDataRow(label, value) {
+    // Hitung tinggi baris berdasarkan panjang teks
+    const maxWidth = p2ValW - 8;
+    const valueLines = pdf.splitTextToSize(String(value), maxWidth);
+    const lineHeight = 4; // Jarak antar baris dalam satu cell (lebih rapat)
+    const minRowHeight = 7; // Tinggi minimal baris (sama seperti halaman 1)
+    
+    // Hitung tinggi yang dibutuhkan berdasarkan jumlah baris teks
+    const rowHeight = Math.max(minRowHeight, (valueLines.length * lineHeight) + 4);
+    
+    // Gambar cell dengan border
+    drawCell(tableOffsetX, p2Y, p2LabelW, rowHeight);
+    drawCell(tableOffsetX + p2LabelW, p2Y, p2ValW, rowHeight);
+    
+    // Tulis label - NORMAL
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    const labelLines = pdf.splitTextToSize(label, p2LabelW - 4);
+    
+    // Hitung posisi Y untuk label agar di tengah vertikal
+    if (labelLines.length === 1) {
+        pdf.text(label, tableOffsetX + 2, p2Y + (rowHeight / 2) + 1.2);
+    } else {
+        let labelY = p2Y + (rowHeight / 2) - ((labelLines.length - 1) * lineHeight / 2) + 1.2;
+        labelLines.forEach((line, idx) => {
+            pdf.text(line, tableOffsetX + 2, labelY + (idx * lineHeight));
         });
+    }
+    
+    // Tulis value - NORMAL
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    
+    // Hitung posisi Y untuk value agar di tengah vertikal
+    let valueY = p2Y + (rowHeight / 2) - ((valueLines.length - 1) * lineHeight / 2) + 1.2;
+    
+    valueLines.forEach((line, idx) => {
+        pdf.text(line, tableOffsetX + p2LabelW + 4, valueY + (idx * lineHeight));
+    });
+    
+    p2Y += rowHeight;
+    
+    return p2Y;
+}
 
-        drawCell(tableOffsetX + p2LabelW, fotoCellY, p2ValW, fotoH);
+// Panggil semua baris data
+addDataRow('Nama Perusahaan', companyName);
+addDataRow('Nomor Urut Sumur Bor', shallowWellNumber);
+addDataRow('Alamat', companyAddress);
+addDataRow('Sumur', wellNumber);
+addDataRow('Koordinat', `X = ${longitude}, Y = ${latitude}`);
+addDataRow('Elevasi', elevation + ' mdpl');
+addDataRow('Tanggal pelaksanaan borehole', formattedDate);
+addDataRow('Kedalaman Konstruksi Sumur', totalPipeLength > 0 ? `${formatNumber(totalPipeLength)} m.bmt` : '-');
+addDataRow('Kedalaman Sumur (sudah terendapkan lumpur/kotoran)', kedalamanSumur);
+addDataRow('Konstruksi Pipa (diameter)', pipeInfo ? pipeInfo + ' Inchi' : '-');
 
-        const wellPhotoPreview = document.getElementById('previewImage');
-        if (wellPhotoPreview && wellPhotoPreview.src && wellPhotoPreview.src !== '#' && wellPhotoPreview.src.startsWith('data:')) {
-            try {
-                const imgPadding = 5;
-                const imgAreaW = p2ValW - (imgPadding * 2);
-                const imgAreaH = fotoH - (imgPadding * 2);
-                
-                let imgWidth, imgHeight;
-                if (wellPhotoPreview.naturalWidth && wellPhotoPreview.naturalHeight) {
-                    imgWidth = wellPhotoPreview.naturalWidth;
-                    imgHeight = wellPhotoPreview.naturalHeight;
-                } else if (wellPhotoPreview.width && wellPhotoPreview.height) {
-                    imgWidth = wellPhotoPreview.width;
-                    imgHeight = wellPhotoPreview.height;
-                } else {
-                    imgWidth = 800;
-                    imgHeight = 600;
-                }
-                
-                const ratio = imgWidth / imgHeight;
-                let imgW, imgH;
-                
-                if (imgAreaW / imgAreaH > ratio) {
-                    imgH = imgAreaH;
-                    imgW = imgH * ratio;
-                } else {
-                    imgW = imgAreaW;
-                    imgH = imgW / ratio;
-                }
-                
-                const imgX = tableOffsetX + p2LabelW + imgPadding + (imgAreaW - imgW) / 2;
-                const imgY = fotoCellY + imgPadding + (imgAreaH - imgH) / 2;
-                
-                addImageToPDF(pdf, wellPhotoPreview.src, imgX, imgY, imgW, imgH);
-                
-            } catch (e) {
-                console.error('Error adding well photo:', e);
-                pdf.setFont('helvetica', 'italic');
-                pdf.setFontSize(8);
-                pdf.setTextColor(100, 100, 100);
-                
-                const textX = tableOffsetX + p2LabelW + (p2ValW / 2);
-                const textY = fotoCellY + (fotoH / 2);
-                pdf.text('Foto tidak tersedia', textX, textY, { align: 'center' });
-                
-                pdf.setTextColor(0, 0, 0);
-                pdf.setFont('helvetica', 'normal');
-            }
+// Baris Screen
+addDataRow('Screen', screenInfo);
+
+// Lanjutkan baris berikutnya
+addDataRow('Jarak Muka Pipa ke Permukaan Tanah', pipeTopInfo);
+addDataRow('Jarak Piezometer ke Sumur', piezoDistance ? piezoDistance + ' m' : '-');
+addDataRow('Jenis/Kap. Pompa', pumpType);
+addDataRow('Posisi Pompa', pumpPosition ? pumpPosition + ' m' : '-');
+
+// Foto Sumur Bor
+const fotoH = 50; // Tinggi foto (dikurangi dari 65)
+drawCell(tableOffsetX, p2Y, p2LabelW, fotoH);
+drawCell(tableOffsetX + p2LabelW, p2Y, p2ValW, fotoH);
+
+// Tulis label "Foto Sumur Bor" - NORMAL
+pdf.setFont('helvetica', 'normal');
+pdf.setFontSize(8);
+const fotoLabelLines = pdf.splitTextToSize('Foto Sumur Bor', p2LabelW - 4);
+
+if (fotoLabelLines.length === 1) {
+    pdf.text('Foto Sumur Bor', tableOffsetX + 2, p2Y + (fotoH / 2) + 1.2);
+} else {
+    let fotoLabelY = p2Y + (fotoH / 2) - ((fotoLabelLines.length - 1) * 4 / 2) + 1.2;
+    fotoLabelLines.forEach((line, idx) => {
+        pdf.text(line, tableOffsetX + 2, fotoLabelY + (idx * 4));
+    });
+}
+
+// Tampilkan foto sumur bor
+const wellPhotoPreview = document.getElementById('previewImage');
+if (wellPhotoPreview && wellPhotoPreview.src && wellPhotoPreview.src !== '#' && wellPhotoPreview.src.startsWith('data:')) {
+    try {
+        const imgPadding = 4;
+        const imgAreaW = p2ValW - (imgPadding * 2);
+        const imgAreaH = fotoH - (imgPadding * 2);
+        
+        let imgWidth, imgHeight;
+        if (wellPhotoPreview.naturalWidth && wellPhotoPreview.naturalHeight) {
+            imgWidth = wellPhotoPreview.naturalWidth;
+            imgHeight = wellPhotoPreview.naturalHeight;
+        } else if (wellPhotoPreview.width && wellPhotoPreview.height) {
+            imgWidth = wellPhotoPreview.width;
+            imgHeight = wellPhotoPreview.height;
         } else {
-            pdf.setFont('helvetica', 'italic');
-            pdf.setFontSize(8);
-            pdf.setTextColor(100, 100, 100);
-            
-            const textX = tableOffsetX + p2LabelW + (p2ValW / 2);
-            const textY = fotoCellY + (fotoH / 2);
-            pdf.text('Foto tidak tersedia', textX, textY, { align: 'center' });
-            
-            pdf.setTextColor(0, 0, 0);
-            pdf.setFont('helvetica', 'normal');
+            imgWidth = 800;
+            imgHeight = 600;
         }
+        
+        const ratio = imgWidth / imgHeight;
+        let imgW, imgH;
+        
+        if (imgAreaW / imgAreaH > ratio) {
+            imgH = imgAreaH;
+            imgW = imgH * ratio;
+        } else {
+            imgW = imgAreaW;
+            imgH = imgW / ratio;
+        }
+        
+        const imgX = tableOffsetX + p2LabelW + imgPadding + (imgAreaW - imgW) / 2;
+        const imgY = p2Y + imgPadding + (imgAreaH - imgH) / 2;
+        
+        addImageToPDF(pdf, wellPhotoPreview.src, imgX, imgY, imgW, imgH);
+        
+    } catch (e) {
+        console.error('Error adding well photo:', e);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        
+        const textX = tableOffsetX + p2LabelW + (p2ValW / 2);
+        const textY = p2Y + (fotoH / 2);
+        pdf.text('Foto tidak tersedia', textX, textY, { align: 'center' });
+        
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont('helvetica', 'normal');
+    }
+} else {
+    pdf.setFont('helvetica', 'italic');
+    pdf.setFontSize(8);
+    pdf.setTextColor(100, 100, 100);
+    
+    const textX = tableOffsetX + p2LabelW + (p2ValW / 2);
+    const textY = p2Y + (fotoH / 2);
+    pdf.text('Foto tidak tersedia', textX, textY, { align: 'center' });
+    
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont('helvetica', 'normal');
+}
+
+p2Y += fotoH;
 
        // =========== HALAMAN 3: DOKUMENTASI KEGIATAN BOREHOLE CAMERA (1/2) ===========
 pdf.addPage();
