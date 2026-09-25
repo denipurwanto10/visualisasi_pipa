@@ -3086,7 +3086,6 @@ addDataRow('Koordinat', `X = ${longitude}, Y = ${latitude}`);
 addDataRow('Elevasi', elevation + ' mdpl');
 addDataRow('Tanggal pelaksanaan borehole', formattedDate);
 addDataRow('Kedalaman Konstruksi Sumur', totalPipeLength > 0 ? `${formatNumber(totalPipeLength)} m.bmt` : '-');
-addDataRow('Kedalaman Sumur (sudah terendapkan lumpur/kotoran)', kedalamanSumur);
 addDataRow('Konstruksi Pipa (diameter)', pipeInfo ? pipeInfo + ' Inchi' : '-');
 
 // Baris Screen

@@ -21,9 +21,32 @@ Proyek ini dirancang untuk membantu para insinyur geoteknik, hidrogeologi, atau 
 
 ## 🧑‍💻 Teknologi yang Digunakan
 
-- **HTML5**: Struktur halaman dan form input.
-- **CSS3**: Styling, layout responsif (Flexbox/Grid), dan animasi.
-- **JavaScript (ES6+)**: Logika visualisasi, manajemen state, dan interaksi DOM.
-- **Canvas API**: Menggambar pipa, saringan, MAT, dan skala kedalaman.
-- **LocalStorage** (opsional): Menyimpan data sumur sementara.
-- **FileReader API**: Upload dan preview gambar dokumentasi.
+- **React 18 + Vite 5**: Antarmuka modern, cepat, dan modular.
+- **Lucide React**: Ikon modern pada navigasi, formulir, dan aksi.
+- **CSS modern**: Kartu kaca, tema terang profesional, layout Flexbox/Grid, dan responsif penuh.
+- **Canvas API**: Menggambar pipa, saringan, open hole, MAT, permukaan tanah, dan skala kedalaman.
+- **jsPDF**: Ekspor laporan konstruksi, data teknis, foto borehole, dan dokumentasi kegiatan.
+- **LocalStorage**: Menyimpan otomatis seluruh model, data sumur, dan dokumentasi di browser.
+- **FileReader API**: Validasi upload gambar, pratinjau, dan batas maksimal 5 MB per foto.
+
+## 🚀 Menjalankan Proyek
+
+1. Instal dependensi:
+
+   ```sh
+   npm install
+   ```
+
+2. Jalankan mode pengembangan:
+
+   ```sh
+   npm run dev
+   ```
+
+3. Build versi produksi:
+
+   ```sh
+   npm run build
+   ```
+
+Seluruh data tersimpan otomatis di browser. Gunakan tombol **Simpan** untuk penyimpanan manual, **Reset** untuk menghapus data per halaman, dan **Unduh PDF** untuk laporan siap diserahkan.
